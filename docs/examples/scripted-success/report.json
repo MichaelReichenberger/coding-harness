@@ -1,0 +1,208 @@
+{
+  "run_id": "20261005T161522Z-71017deb",
+  "started_at": "2026-10-05T16:15:23.471529+00:00",
+  "finished_at": "2026-10-05T16:16:07.533764+00:00",
+  "state": "passed",
+  "reason": "Simulierter Mengen-Fix; unabhängige Endprüfung anfordern.",
+  "success": true,
+  "simulated": true,
+  "provider": "scripted",
+  "model": "deterministic-script",
+  "model_protocol": "scripted",
+  "target": {
+    "url": "https://github.com/TMBeaver/openstock",
+    "commit": "abc87dccab96c78917b35add542284e61adc5f37",
+    "editable": [
+      "operations.py",
+      "app.py"
+    ],
+    "task": "Lagertransfers müssen Mengen kleiner oder gleich null mit einem verständlichen HTTP-400-Fehler ablehnen. Enthält ein Transfer eine ungültige Position, dürfen keine Bestände verändert und keine Transferdokumente angelegt werden. Gültige positive Transfers müssen weiterhin korrekt funktionieren. Behalte bestehende Geschäftsregeln, Berechtigungen und das Datenbankschema bei."
+  },
+  "task": "Lagertransfers müssen Mengen kleiner oder gleich null mit einem verständlichen HTTP-400-Fehler ablehnen. Enthält ein Transfer eine ungültige Position, dürfen keine Bestände verändert und keine Transferdokumente angelegt werden. Gültige positive Transfers müssen weiterhin korrekt funktionieren. Behalte bestehende Geschäftsregeln, Berechtigungen und das Datenbankschema bei.",
+  "limits": {
+    "actions": 40,
+    "rounds": 50,
+    "retries": 2,
+    "check_seconds": 120,
+    "model_seconds": 180,
+    "output_bytes": 65536,
+    "file_bytes": 262144,
+    "context_bytes": 196608,
+    "artifact_bytes": 8388608
+  },
+  "environment": {
+    "platform": "linux",
+    "image_id": "sha256:1d24aae80df4a1feb858d870c9ff76bff86a769008a0d96789b992d3be0f1242"
+  },
+  "actions": 5,
+  "rounds": 5,
+  "requests": 5,
+  "retries": 0,
+  "denials": 0,
+  "changed_files": [
+    "operations.py"
+  ],
+  "diff_truncated": false,
+  "checks": [
+    {
+      "phase": "baseline",
+      "check_id": "acceptance",
+      "status": "failed",
+      "command": [
+        "python",
+        "-I",
+        "/trusted/entry.py",
+        "acceptance"
+      ],
+      "exit_code": 1,
+      "stdout": "Demo data written at 2026-10-05T16:15:28.\n  5 product groups, 14 products, 6 companies\n\n  Username: harness\n  Password: (the one you supplied)\n\nDo not use demo data in production: the companies and products are fictional.\nPASS positive: HTTP 200; unchanged=False\nFAIL negative: HTTP 200; unchanged=False\nFAIL zero: HTTP 200; unchanged=False\nFAIL mixed: HTTP 200; unchanged=False\nFAIL mixed_zero: HTTP 200; unchanged=False\nHARNESS_ACCEPTANCE={\"positive_control\": true, \"business_failures\": [\"negative\", \"zero\", \"mixed\", \"mixed_zero\"], \"infrastructure_errors\": [], \"cases\": {\"positive\": {\"passed\": true, \"http\": 200, \"body\": {\"document_id\": 1, \"from_stock\": 1, \"invoice_no\": \"PP261005161530\", \"ok\": true, \"products\": [{\"group_code\": \"G01\", \"item_code\": \"BOLT-M8-30\", \"qty\": 2.0, \"stock_after\": 3998.0, \"stock_before\": 4000.0, \"supplier_code\": \"SUP01\"}], \"to_stock\": 2}, \"unchanged\": false, \"documents_before\": 0, \"documents_after\": 1}, \"negative\": {\"passed\": false, \"http\": 200, \"body\": {\"document_id\": 1, \"from_stock\": 1, \"invoice_no\": \"PP261005161530\", \"ok\": true, \"products\": [{\"group_code\": \"G01\", \"item_code\": \"BOLT-M8-30\", \"qty\": -1.0, \"stock_after\": 4001.0, \"stock_before\": 4000.0, \"supplier_code\": \"SUP01\"}], \"to_stock\": 2}, \"unchanged\": false, \"documents_before\": 0, \"documents_after\": 1}, \"zero\": {\"passed\": false, \"http\": 200, \"body\": {\"document_id\": 1, \"from_stock\": 1, \"invoice_no\": \"PP261005161531\", \"ok\": true, \"products\": [{\"group_code\": \"G01\", \"item_code\": \"BOLT-M8-30\", \"qty\": 0.0, \"stock_after\": 4000.0, \"stock_before\": 4000.0, \"supplier_code\": \"SUP01\"}], \"to_stock\": 2}, \"unchanged\": false, \"documents_before\": 0, \"documents_after\": 1}, \"mixed\": {\"passed\": false, \"http\": 200, \"body\": {\"document_id\": 1, \"from_stock\": 1, \"invoice_no\": \"PP261005161531\", \"ok\": true, \"products\": [{\"group_code\": \"G01\", \"item_code\": \"BOLT-M8-30\", \"qty\": 2.0, \"stock_after\": 3998.0, \"stock_before\": 4000.0, \"supplier_code\": \"SUP01\"}, {\"group_code\": \"G02\", \"item_code\": \"NUT-M8\", \"qty\": -1.0, \"stock_after\": 8001.0, \"stock_before\": 8000.0, \"supplier_code\": \"SUP01\"}], \"to_stock\": 2}, \"unchanged\": false, \"documents_before\": 0, \"documents_after\": 1}, \"mixed_zero\": {\"passed\": false, \"http\": 200, \"body\": {\"document_id\": 1, \"from_stock\": 1, \"invoice_no\": \"PP261005161531\", \"ok\": true, \"products\": [{\"group_code\": \"G01\", \"item_code\": \"BOLT-M8-30\", \"qty\": 2.0, \"stock_after\": 3998.0, \"stock_before\": 4000.0, \"supplier_code\": \"SUP01\"}, {\"group_code\": \"G02\", \"item_code\": \"NUT-M8\", \"qty\": 0.0, \"stock_after\": 8000.0, \"stock_before\": 8000.0, \"supplier_code\": \"SUP01\"}], \"to_stock\": 2}, \"unchanged\": false, \"documents_before\": 0, \"documents_after\": 1}}}\n",
+      "stderr": "OPENSTOCK SERVER LOG (last 16 KiB):\n\n",
+      "truncated": false,
+      "timed_out": false,
+      "cancelled": false,
+      "seconds": 8.296,
+      "reason": "",
+      "container": "harness-20261005t161522z-71017deb-49bd44f9",
+      "cleanup_verified": true
+    },
+    {
+      "phase": "baseline",
+      "check_id": "regression_core",
+      "status": "passed",
+      "command": [
+        "python",
+        "-I",
+        "/trusted/entry.py",
+        "regression_core"
+      ],
+      "exit_code": 0,
+      "stdout": "Demo data written at 2026-10-05T16:15:35.\n  5 product groups, 14 products, 6 companies\n\n  Username: harness\n  Password: (the one you supplied)\n\nDo not use demo data in production: the companies and products are fictional.\n=== CORE TESTS (SQLite) ===\n\n1. Goods receipt (weighted average cost + freight allocation)\n  [OK] Received \n  [OK] Stock +10 — 4000.0 -> 4010.0\n  [OK] PURCHASE document created \n  [OK] Duplicate no rejected \n\n2. Goods receipt with a mismatched amount (must be rejected)\n  [OK] Amount mismatch → ok=False — Amount mismatch: received 1210.00 ~ invoice 1208.79\n\n3. Sale (stock decrease, profit)\n  [OK] Sold — invoice INV2600001\n  [OK] Invoice no INV format \n  [OK] Stock -4 \n  [OK] Profit = (150-cost)*4 — profit=598.39\n\n4. Cash sale (invoice_no = N)\n  [OK] Cash → invoice_no 'N' \n\n5. Transfer between warehouses\n  [OK] Transferred \n  [OK] Stock1 -2, Stock2 +2 \n  [OK] Same warehouse rejected \n\n6. Production — issue and completion with a finished item\n  [OK] Issued to production — G26000001\n  [OK] stock_production +2 \n  [OK] In the open production list \n  [OK] Completed with a finished item \n  [OK] stock_production written off (-2) \n  [OK] Production cleared \n\n7. REVERSAL — cancelling a sale restores the stock\n  [OK] Sale cancelled \n  [OK] Stock restored (+4) \n  [OK] Document marked as cancelled \n  [OK] Repeated cancellation rejected \n\n=== RESULTS ===\n  PASSED: 23\n  FAILED: 0\n",
+      "stderr": "",
+      "truncated": false,
+      "timed_out": false,
+      "cancelled": false,
+      "seconds": 4.484,
+      "reason": "",
+      "container": "harness-20261005t161522z-71017deb-dea27d78",
+      "cleanup_verified": true
+    },
+    {
+      "phase": "baseline",
+      "check_id": "regression_reversal",
+      "status": "passed",
+      "command": [
+        "python",
+        "-I",
+        "/trusted/entry.py",
+        "regression_reversal"
+      ],
+      "exit_code": 0,
+      "stdout": "Demo data written at 2026-10-05T16:15:40.\n  5 product groups, 14 products, 6 companies\n\n  Username: harness\n  Password: (the one you supplied)\n\nDo not use demo data in production: the companies and products are fictional.\n=== REVERSAL + ADVANCE + OWNERSHIP (SQLite) ===\n\n1. A REVERSAL returns the consumed advance\n  [OK] Advance +1000 — 0.0 -> 1000.0\n  [OK] Sold — invoice INV2600001\n  [OK] Advance consumed (balance -544.50) — used=544.5 balance=455.5\n  [OK] Consumed > 0 — used=544.5\n  [OK] Cancelled \n  [OK] Refunded advance == consumed — refunded=544.5 used=544.5\n  [OK] Advance balance restored — 1000.0 (should be 1000.0)\n  [OK] Warehouse stock restored (+3) \n  [OK] Repeated cancellation rejected \n\n2. Ownership check (only the owner / admin / all_documents may cancel)\n  [OK] SOMEONE ELSE'S without the permission — blocked \n  [OK] Document stayed active after the blocked attempt \n  [OK] With 'all_documents' — allowed \n  [OK] The owner cancels their own — allowed \n\n3. due_date for a credit sale from the customer's payment terms\n  [OK] due_date = date + payment terms — 2026-07-15 (should be 2026-07-15)\n  [OK] Cash — due_date empty \n\n4. Advance collision across cash sales (shared doc_no 'N') — refunds ONLY its own\n  [OK] Both cash sales (N) consumed an advance — A=181.5 B=181.5\n  [OK] Balance decreased by usedA+usedB \n  [OK] Reversal of A refunded ONLY usedA (not usedA+usedB) — refunded=181.5 usedA=181.5 usedB=181.5\n  [OK] After the A reversal balance = b0 - usedB (B still stands) — 818.5 (should be 818.5)\n  [OK] Reversal of B refunded usedB \n  [OK] After both reversals the balance is fully restored (b0) — 1000.0 (should be 1000.0)\n  [OK] Reversal of a cash sale without an advance refunds 0 — refunded=0.0\n\n=== RESULTS ===\n  PASSED: 22\n  FAILED: 0\n",
+      "stderr": "",
+      "truncated": false,
+      "timed_out": false,
+      "cancelled": false,
+      "seconds": 4.297,
+      "reason": "",
+      "container": "harness-20261005t161522z-71017deb-c3a8d851",
+      "cleanup_verified": true
+    },
+    {
+      "phase": "agent",
+      "check_id": "acceptance",
+      "status": "passed",
+      "command": [
+        "python",
+        "-I",
+        "/trusted/entry.py",
+        "acceptance"
+      ],
+      "exit_code": 0,
+      "stdout": "Demo data written at 2026-10-05T16:15:45.\n  5 product groups, 14 products, 6 companies\n\n  Username: harness\n  Password: (the one you supplied)\n\nDo not use demo data in production: the companies and products are fictional.\nPASS positive: HTTP 200; unchanged=False\nPASS negative: HTTP 400; unchanged=True\nPASS zero: HTTP 400; unchanged=True\nPASS mixed: HTTP 400; unchanged=True\nPASS mixed_zero: HTTP 400; unchanged=True\nHARNESS_ACCEPTANCE={\"positive_control\": true, \"business_failures\": [], \"infrastructure_errors\": [], \"cases\": {\"positive\": {\"passed\": true, \"http\": 200, \"body\": {\"document_id\": 1, \"from_stock\": 1, \"invoice_no\": \"PP261005161547\", \"ok\": true, \"products\": [{\"group_code\": \"G01\", \"item_code\": \"BOLT-M8-30\", \"qty\": 2.0, \"stock_after\": 3998.0, \"stock_before\": 4000.0, \"supplier_code\": \"SUP01\"}], \"to_stock\": 2}, \"unchanged\": false, \"documents_before\": 0, \"documents_after\": 1}, \"negative\": {\"passed\": true, \"http\": 400, \"body\": {\"error\": \"Transfer quantity must be greater than zero.\", \"ok\": false}, \"unchanged\": true, \"documents_before\": 0, \"documents_after\": 0}, \"zero\": {\"passed\": true, \"http\": 400, \"body\": {\"error\": \"Transfer quantity must be greater than zero.\", \"ok\": false}, \"unchanged\": true, \"documents_before\": 0, \"documents_after\": 0}, \"mixed\": {\"passed\": true, \"http\": 400, \"body\": {\"error\": \"Transfer quantity must be greater than zero.\", \"ok\": false}, \"unchanged\": true, \"documents_before\": 0, \"documents_after\": 0}, \"mixed_zero\": {\"passed\": true, \"http\": 400, \"body\": {\"error\": \"Transfer quantity must be greater than zero.\", \"ok\": false}, \"unchanged\": true, \"documents_before\": 0, \"documents_after\": 0}}}\n",
+      "stderr": "",
+      "truncated": false,
+      "timed_out": false,
+      "cancelled": false,
+      "seconds": 7.063,
+      "reason": "",
+      "container": "harness-20261005t161522z-71017deb-6b9665ff",
+      "cleanup_verified": true
+    },
+    {
+      "phase": "final",
+      "check_id": "acceptance",
+      "status": "passed",
+      "command": [
+        "python",
+        "-I",
+        "/trusted/entry.py",
+        "acceptance"
+      ],
+      "exit_code": 0,
+      "stdout": "Demo data written at 2026-10-05T16:15:52.\n  5 product groups, 14 products, 6 companies\n\n  Username: harness\n  Password: (the one you supplied)\n\nDo not use demo data in production: the companies and products are fictional.\nPASS positive: HTTP 200; unchanged=False\nPASS negative: HTTP 400; unchanged=True\nPASS zero: HTTP 400; unchanged=True\nPASS mixed: HTTP 400; unchanged=True\nPASS mixed_zero: HTTP 400; unchanged=True\nHARNESS_ACCEPTANCE={\"positive_control\": true, \"business_failures\": [], \"infrastructure_errors\": [], \"cases\": {\"positive\": {\"passed\": true, \"http\": 200, \"body\": {\"document_id\": 1, \"from_stock\": 1, \"invoice_no\": \"PP261005161554\", \"ok\": true, \"products\": [{\"group_code\": \"G01\", \"item_code\": \"BOLT-M8-30\", \"qty\": 2.0, \"stock_after\": 3998.0, \"stock_before\": 4000.0, \"supplier_code\": \"SUP01\"}], \"to_stock\": 2}, \"unchanged\": false, \"documents_before\": 0, \"documents_after\": 1}, \"negative\": {\"passed\": true, \"http\": 400, \"body\": {\"error\": \"Transfer quantity must be greater than zero.\", \"ok\": false}, \"unchanged\": true, \"documents_before\": 0, \"documents_after\": 0}, \"zero\": {\"passed\": true, \"http\": 400, \"body\": {\"error\": \"Transfer quantity must be greater than zero.\", \"ok\": false}, \"unchanged\": true, \"documents_before\": 0, \"documents_after\": 0}, \"mixed\": {\"passed\": true, \"http\": 400, \"body\": {\"error\": \"Transfer quantity must be greater than zero.\", \"ok\": false}, \"unchanged\": true, \"documents_before\": 0, \"documents_after\": 0}, \"mixed_zero\": {\"passed\": true, \"http\": 400, \"body\": {\"error\": \"Transfer quantity must be greater than zero.\", \"ok\": false}, \"unchanged\": true, \"documents_before\": 0, \"documents_after\": 0}}}\n",
+      "stderr": "",
+      "truncated": false,
+      "timed_out": false,
+      "cancelled": false,
+      "seconds": 7.203,
+      "reason": "",
+      "container": "harness-20261005t161522z-71017deb-5bd8ac49",
+      "cleanup_verified": true
+    },
+    {
+      "phase": "final",
+      "check_id": "regression_core",
+      "status": "passed",
+      "command": [
+        "python",
+        "-I",
+        "/trusted/entry.py",
+        "regression_core"
+      ],
+      "exit_code": 0,
+      "stdout": "Demo data written at 2026-10-05T16:15:59.\n  5 product groups, 14 products, 6 companies\n\n  Username: harness\n  Password: (the one you supplied)\n\nDo not use demo data in production: the companies and products are fictional.\n=== CORE TESTS (SQLite) ===\n\n1. Goods receipt (weighted average cost + freight allocation)\n  [OK] Received \n  [OK] Stock +10 — 4000.0 -> 4010.0\n  [OK] PURCHASE document created \n  [OK] Duplicate no rejected \n\n2. Goods receipt with a mismatched amount (must be rejected)\n  [OK] Amount mismatch → ok=False — Amount mismatch: received 1210.00 ~ invoice 1208.79\n\n3. Sale (stock decrease, profit)\n  [OK] Sold — invoice INV2600001\n  [OK] Invoice no INV format \n  [OK] Stock -4 \n  [OK] Profit = (150-cost)*4 — profit=598.39\n\n4. Cash sale (invoice_no = N)\n  [OK] Cash → invoice_no 'N' \n\n5. Transfer between warehouses\n  [OK] Transferred \n  [OK] Stock1 -2, Stock2 +2 \n  [OK] Same warehouse rejected \n\n6. Production — issue and completion with a finished item\n  [OK] Issued to production — G26000001\n  [OK] stock_production +2 \n  [OK] In the open production list \n  [OK] Completed with a finished item \n  [OK] stock_production written off (-2) \n  [OK] Production cleared \n\n7. REVERSAL — cancelling a sale restores the stock\n  [OK] Sale cancelled \n  [OK] Stock restored (+4) \n  [OK] Document marked as cancelled \n  [OK] Repeated cancellation rejected \n\n=== RESULTS ===\n  PASSED: 23\n  FAILED: 0\n",
+      "stderr": "",
+      "truncated": false,
+      "timed_out": false,
+      "cancelled": false,
+      "seconds": 4.562,
+      "reason": "",
+      "container": "harness-20261005t161522z-71017deb-9286ddef",
+      "cleanup_verified": true
+    },
+    {
+      "phase": "final",
+      "check_id": "regression_reversal",
+      "status": "passed",
+      "command": [
+        "python",
+        "-I",
+        "/trusted/entry.py",
+        "regression_reversal"
+      ],
+      "exit_code": 0,
+      "stdout": "Demo data written at 2026-10-05T16:16:04.\n  5 product groups, 14 products, 6 companies\n\n  Username: harness\n  Password: (the one you supplied)\n\nDo not use demo data in production: the companies and products are fictional.\n=== REVERSAL + ADVANCE + OWNERSHIP (SQLite) ===\n\n1. A REVERSAL returns the consumed advance\n  [OK] Advance +1000 — 0.0 -> 1000.0\n  [OK] Sold — invoice INV2600001\n  [OK] Advance consumed (balance -544.50) — used=544.5 balance=455.5\n  [OK] Consumed > 0 — used=544.5\n  [OK] Cancelled \n  [OK] Refunded advance == consumed — refunded=544.5 used=544.5\n  [OK] Advance balance restored — 1000.0 (should be 1000.0)\n  [OK] Warehouse stock restored (+3) \n  [OK] Repeated cancellation rejected \n\n2. Ownership check (only the owner / admin / all_documents may cancel)\n  [OK] SOMEONE ELSE'S without the permission — blocked \n  [OK] Document stayed active after the blocked attempt \n  [OK] With 'all_documents' — allowed \n  [OK] The owner cancels their own — allowed \n\n3. due_date for a credit sale from the customer's payment terms\n  [OK] due_date = date + payment terms — 2026-07-15 (should be 2026-07-15)\n  [OK] Cash — due_date empty \n\n4. Advance collision across cash sales (shared doc_no 'N') — refunds ONLY its own\n  [OK] Both cash sales (N) consumed an advance — A=181.5 B=181.5\n  [OK] Balance decreased by usedA+usedB \n  [OK] Reversal of A refunded ONLY usedA (not usedA+usedB) — refunded=181.5 usedA=181.5 usedB=181.5\n  [OK] After the A reversal balance = b0 - usedB (B still stands) — 818.5 (should be 818.5)\n  [OK] Reversal of B refunded usedB \n  [OK] After both reversals the balance is fully restored (b0) — 1000.0 (should be 1000.0)\n  [OK] Reversal of a cash sale without an advance refunds 0 — refunded=0.0\n\n=== RESULTS ===\n  PASSED: 22\n  FAILED: 0\n",
+      "stderr": "",
+      "truncated": false,
+      "timed_out": false,
+      "cancelled": false,
+      "seconds": 4.453,
+      "reason": "",
+      "container": "harness-20261005t161522z-71017deb-c00a2636",
+      "cleanup_verified": true
+    }
+  ],
+  "trusted_hashes": {
+    "acceptance.py": "882a7efe11c6ea923a96781bfb683f07874d71ab079ae614f6216264bc81c624",
+    "entry.py": "9ea5101c71c8f2ef2d594fc8f9e5a67287fc165090f88a0d5cd24bc777d32215",
+    "upstream/LICENSE": "efc883e3ef2e6caa9110150b23d9afa440e45c9cae3a48b94c2f970e3b169e7a",
+    "upstream/provenance.json": "aea0aa1ceffbb8a3f796ae4fb7208163880340a380240d2c498efe215f1f58bd",
+    "upstream/test_core.py": "bdd04159e1db3a335e875a227792a69e3bd5d1eb77f6eace0f7b6c56000bbf90",
+    "upstream/test_reversal_advances.py": "e5de1ee408620d4844be9ab5f8d0982a9b38766e391c17a5f847477f0a1eeb28"
+  },
+  "check_commands_sha256": "055bf484eeec72c3b5a0ed0d9cd5b48ca53a6cd0bfeebdae1e90c015f199b58a",
+  "manual_help": [
+    "Entwickler erstellte Aufgabentext, Akzeptanztest, Startkontext und unveränderten Regressionstest-Adapter."
+  ],
+  "events_truncated": false
+}

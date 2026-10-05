@@ -1,0 +1,12 @@
+{
+  "url": "https://github.com/emilybache/SupermarketReceipt-Refactoring-Kata",
+  "commit": "c72d68abd77a417f84193b72a3b8d14177336066",
+  "source_directory": "python/tests",
+  "note": "Unchanged upstream bytes; LICENSE from repository root/license.txt.",
+  "sha256": {
+    "LICENSE": "d148169eb360b8bb8566309a25a4126dd26d0a41258799756a7c5317b3536544",
+    "tests/fake_catalog.py": "4904b132bc430d753befbfc3a7f7f586d944113158dbf6f29157afc43930fc14",
+    "tests/test_supermarket.py": "d90e936e30a9560a10e84e8d5eb55d220d26a260bf86ebd02ec5827bad2a13e1",
+    "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

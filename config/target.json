@@ -1,0 +1,10 @@
+{
+  "name": "Supermarket Receipt",
+  "url": "https://github.com/emilybache/SupermarketReceipt-Refactoring-Kata",
+  "subdirectory": "python",
+  "commit": "c72d68abd77a417f84193b72a3b8d14177336066",
+  "editable": [
+    "shopping_cart.py"
+  ],
+  "task": "Kleine Aufgabe: Korrigiere in shopping_cart.py bei TWO_FOR_AMOUNT die Anzahl vollständiger Zweierpakete. Beispiel: Einzelpreis 1.00, Angebot 2 für 1.50, Menge 3 ergibt 2.50 (ein Paket plus ein Einzelstück), nicht 3.25. Die Paketanzahl muss ganzzahlig sein. Ersetze dazu in der Berechnung ausschließlich 'offer.argument * (quantity_as_int / x)' durch 'offer.argument * (quantity_as_int // x)'. Der Restartikel bleibt zum Einzelpreis; andere Angebote bleiben unverändert. Rufe danach run_check mit check_id acceptance auf. Wenn der Check passed meldet, rufe finish auf."
+}

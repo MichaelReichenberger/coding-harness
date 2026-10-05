@@ -1,0 +1,18 @@
+# Copying is optional. Environment variables override provider settings.
+ollama_base_url = "http://127.0.0.1:11434"
+model = "qwen2.5-coder:7b"
+# Explicit compatibility protocol: JSON-schema-constrained tool request.
+# "native" uses Ollama tool_calls directly; never interprets prose as an action.
+ollama_protocol = "json_schema"
+image = "docker.io/library/supermarket-harness:stage1"
+
+[limits]
+actions = 8
+rounds = 12
+retries = 2
+check_seconds = 120
+model_seconds = 180
+output_bytes = 65536
+file_bytes = 262144
+context_bytes = 196608
+artifact_bytes = 8388608

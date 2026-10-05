@@ -1,0 +1,10 @@
+.venv/
+.harness/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+*.py[cod]
+config.local.toml
+.env
+tmp/

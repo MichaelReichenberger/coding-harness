@@ -1,0 +1,12 @@
+diff --git a/operations.py b/operations.py
+--- a/operations.py
++++ b/operations.py
+@@ -421,6 +421,8 @@
+                 if row is None:
+                     raise OperationError("Product not found: {}".format(e["code"]))
+                 qty = float(e["qty"])
++                if qty <= 0:
++                    raise OperationError("Transfer quantity must be greater than zero.")
+                 available = float(row[src] or 0)
+                 if qty > available:
+                     raise OperationError(
