@@ -342,32 +342,3 @@ Historische Versuche, doppelte Dokumentation, alte Installationskopien und Logs 
 | `requirements.lock`, `pyproject.toml` | Festgelegte Pakete und Projekt-/Testkonfiguration |
 | `docs/` | Spezifikation, Task, Abgleich, aktuelle Nachweise und Video-Drehbuch |
 | `.venv/`, `.harness/` | Lokale, von Git ausgeschlossene Laufzeitdaten; nicht Teil der Abgabe |
-
-Neue Läufe erzeugen `.harness/runs/<ID>/report.json`, `events.jsonl`, `changes.diff`
-und getrennte `repo`-/`base`-Kopien. Abgeschlossene Läufe können nach Sicherung gelöscht
-werden. Bei `active-container.json` zuerst das Containerende prüfen; diese Warnung
-darf nicht durch Löschen der Datei umgangen werden.
-
-Die Windows-Anleitung wurde am 07.10.2026 mit einem frischen öffentlichen Clone,
-neuer `.venv`, installierten Lockdatei-Paketen, neuer Zielreferenz, Docker-Aufbau,
-Diagnose und UI-Start geprüft. Ein echter 7B-Lauf bestand danach erneut die Checks.
-Das war derselbe Rechner mit bereits installiertem Python/Git/Docker/Ollama und erlaubtem
-Downloadcache; keine Prüfung einer erstmaligen Installation auf anderer Hardware.
-
-Repository: [MichaelReichenberger/coding-harness](https://github.com/MichaelReichenberger/coding-harness).
-Für die Abgabe den aktuellen Quellstand samt Nachweisen veröffentlichen und den Commit
-angeben. Das Demo-Video darf höchstens vier Minuten dauern und muss Taskeingabe,
-Werkzeugnutzung, Codeänderung, Tests und Diff zeigen. [Englisches Drehbuch](docs/demo-script.md).
-Ein API-Key oder andere Secrets sind für das lokale Ollama-Modell nicht nötig.
-
-### Abschließend geprüft am 07.10.2026
-
-Nach der Bereinigung: **59 Offline-Tests und fünf echte Docker-Tests bestanden**;
-die abschließende Gesamtsuite bestätigte nochmals **64 bestandene Tests**,
-Ruff und Paketprüfung grün, `doctor` vollständig bereit, Streamlit-Start geprüft.
-Der echte Lauf `20261007T171054Z-a4859127` mit `qwen2.5-coder:7b`
-bestand in **30.0 Sekunden und 6 Aktionen**: fachlich rote Baseline,
-Modelldiff und anschließend grüne Akzeptanz sowie beide Regressionen.
-Alle Container bereinigt. Der temporäre UI-Testserver wurde beendet.
-[Detaillierte Verifikation](docs/verification.md) ·
-[Laufbericht](docs/evidence/report.json) · [Diff](docs/evidence/changes.diff).
