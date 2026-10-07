@@ -1,7 +1,0 @@
-{
-  "profile": "transfer_message",
-  "url": "https://github.com/TMBeaver/openstock",
-  "commit": "abc87dccab96c78917b35add542284e61adc5f37",
-  "editable": ["operations.py"],
-  "task": "Sehr einfache Aufgabe: Ändere in operations.py genau eine Fehlermeldung in Operations._transfer. Bei identischem Quell- und Ziellager soll statt 'The source and target stock locations cannot be the same.' exakt 'Choose two different stock locations for a transfer.' ausgegeben werden. Die alte Zeichenkette kommt genau einmal vor. Ändere nur diesen Text mit replace_text, keine Bedingungen oder andere Funktionen. HTTP 400, unveränderte Bestände bei abgelehnten Transfers und gültige positive Transfers müssen erhalten bleiben. Rufe danach run_check mit check_id acceptance auf. Wenn dieser Check passed meldet, rufe finish auf."
-}

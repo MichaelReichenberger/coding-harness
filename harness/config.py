@@ -1,3 +1,9 @@
+"""Vertrauenswürdige Einstellungen; das Modell kann sie nicht verändern.
+
+Pydantic prüft Datentypen und Wertebereiche beim Laden. Tippfehler werden durch
+extra='forbid' abgelehnt, statt unbemerkt die gewünschte Grenze zu ignorieren.
+"""
+
 from __future__ import annotations
 
 import json
@@ -13,12 +19,16 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class StrictModel(BaseModel):
+    """Gemeinsame Regeln: keine Zusatzfelder, keine stillen Typumwandlungen."""
+
     model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
 
 
 class Limits(StrictModel):
-    actions: int = Field(default=8, ge=1, le=200)
-    rounds: int = Field(default=12, ge=1, le=200)
+    """Budgets eines Laufs, getrennt nach Aktionen, Zeit und Speicherverbrauch."""
+
+    actions: int = Field(default=40, ge=1, le=200)
+    rounds: int = Field(default=50, ge=1, le=200)
     retries: int = Field(default=2, ge=0, le=5)
     check_seconds: int = Field(default=120, ge=1, le=600)
     model_seconds: int = Field(default=180, ge=1, le=600)
@@ -29,10 +39,14 @@ class Limits(StrictModel):
 
 
 class Settings(StrictModel):
+    """Lokaler Modellzugang, vorbereitetes Docker-Image und Laufgrenzen."""
+
     ollama_base_url: str = "http://127.0.0.1:11434"
-    ollama_protocol: Literal["native", "json_schema"] = "json_schema"
     model: str = Field(default="qwen2.5-coder:7b", min_length=1, max_length=200)
-    image: str = Field(default="docker.io/library/supermarket-harness:stage1", pattern=r"^[a-zA-Z0-9][a-zA-Z0-9_./:@-]{0,200}$")
+    image: str = Field(
+        default="docker.io/library/supermarket-harness:stage1",
+        pattern=r"^[a-zA-Z0-9][a-zA-Z0-9_./:@-]{0,200}$",
+    )
     limits: Limits = Field(default_factory=Limits)
 
     @field_validator("ollama_base_url")
@@ -47,19 +61,29 @@ class Settings(StrictModel):
 
 
 class Target(StrictModel):
+    """Fixierter öffentlicher Quellstand und erlaubte Dateien; enthält keine Lösung."""
+
     name: Literal["Supermarket Receipt"]
     url: Literal["https://github.com/emilybache/SupermarketReceipt-Refactoring-Kata"]
     subdirectory: Literal["python"]
     commit: str = Field(pattern=r"^[0-9a-f]{40}$")
-    editable: list[Literal["shopping_cart.py"]]
-    task: str = Field(min_length=1, max_length=12000)
+    editable: list[
+        Literal[
+            "shopping_cart.py",
+            "teller.py",
+            "receipt.py",
+            "receipt_printer.py",
+            "model_objects.py",
+            "catalog.py",
+        ]
+    ] = Field(min_length=1)
 
 
 def load_settings(path: Path | None = None) -> Settings:
+    """Priorität: Umgebungsvariable > lokale TOML-Datei > Klassenstandard."""
     path = path or ROOT / "config.local.toml"
     data = tomllib.loads(path.read_text("utf-8")) if path.exists() else {}
-    for env, key in [("HARNESS_OLLAMA_BASE_URL", "ollama_base_url"), ("HARNESS_MODEL", "model"),
-                     ("HARNESS_OLLAMA_PROTOCOL", "ollama_protocol")]:
+    for env, key in [("HARNESS_OLLAMA_BASE_URL", "ollama_base_url"), ("HARNESS_MODEL", "model")]:
         if env in os.environ:
             data[key] = os.environ[env]
     return Settings.model_validate(data)

@@ -16,7 +16,13 @@ def tools(tmp_path):
     (root / "db.py").write_text("protected\n", "utf-8")
     (root / "config.json").write_text('{"secret":"hidden"}', "utf-8")
     (root / "binary.bin").write_bytes(b"\x00\xff")
-    return RepositoryTools(root, ["shopping_cart.py"], Limits(), lambda _: pytest.fail("unexpected check"), threading.Event())
+    return RepositoryTools(
+        root,
+        ["shopping_cart.py"],
+        Limits(),
+        lambda _: pytest.fail("unexpected check"),
+        threading.Event(),
+    )
 
 
 def test_list_read_search_edit(tools):
@@ -24,12 +30,28 @@ def test_list_read_search_edit(tools):
     assert "config.json" not in tools.execute("list_files", {})["files"]
     assert "2: unique value" in tools.execute("read_file", {"path": "shopping_cart.py"})["content"]
     assert tools.execute("search_files", {"query": "unique"})["matches"][0]["line"] == 2
-    tools.execute("replace_text", {"path": "shopping_cart.py", "old": "unique value", "new": "changed"})
+    tools.execute(
+        "replace_text", {"path": "shopping_cart.py", "old": "unique value", "new": "changed"}
+    )
     assert "changed" in (tools.root / "shopping_cart.py").read_text()
 
 
-@pytest.mark.parametrize("path", ["../outside.py", "/etc/passwd", "C:\\Windows\\win.ini", "C:relative", "\\\\server\\share",
-                                 "..\\outside.py", "shopping_cart.py:stream", ".git/config", "config.json", "CON", "foo."])
+@pytest.mark.parametrize(
+    "path",
+    [
+        "../outside.py",
+        "/etc/passwd",
+        "C:\\Windows\\win.ini",
+        "C:relative",
+        "\\\\server\\share",
+        "..\\outside.py",
+        "shopping_cart.py:stream",
+        ".git/config",
+        "config.json",
+        "CON",
+        "foo.",
+    ],
+)
 def test_path_boundary(tools, path):
     before = (tools.root / "shopping_cart.py").read_bytes()
     with pytest.raises(ToolError):
@@ -44,8 +66,16 @@ def test_symlink_or_junction_escape(tools, tmp_path):
     link = tools.root / "escape"
     if os.name == "nt":
         import subprocess
-        result = subprocess.run(["powershell", "-NoProfile", "-Command",
-            f"New-Item -ItemType Junction -Path '{link}' -Target '{outside}'"], capture_output=True)
+
+        result = subprocess.run(
+            [
+                "powershell",
+                "-NoProfile",
+                "-Command",
+                f"New-Item -ItemType Junction -Path '{link}' -Target '{outside}'",
+            ],
+            capture_output=True,
+        )
         assert result.returncode == 0, result.stderr
     else:
         link.symlink_to(outside, target_is_directory=True)
@@ -74,9 +104,17 @@ def test_conflict_protected_binary_and_size(tools):
         tools.execute("read_file", {"path": "large.py"})
 
 
-@pytest.mark.parametrize("name,args", [("shell", {}), ("read_file", {"path": 5}),
-    ("list_files", {"extra": True}), ("read_file", {"path": "shopping_cart.py", "start_line": True}),
-    ("replace_text", "{broken"), ("run_check", {"check_id": "whoami"})])
+@pytest.mark.parametrize(
+    "name,args",
+    [
+        ("shell", {}),
+        ("read_file", {"path": 5}),
+        ("list_files", {"extra": True}),
+        ("read_file", {"path": "shopping_cart.py", "start_line": True}),
+        ("replace_text", "{broken"),
+        ("run_check", {"check_id": "whoami"}),
+    ],
+)
 def test_invalid_requests_are_rejected(tools, name, args):
     with pytest.raises(ToolError):
         tools.execute(name, args)

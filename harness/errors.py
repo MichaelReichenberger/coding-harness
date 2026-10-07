@@ -1,22 +1,25 @@
+"""Erwartete Fehlerarten; der Controller übersetzt sie in sichtbare Laufzustände."""
+
+
 class HarnessError(Exception):
-    """An expected, user-readable harness failure."""
+    """Basisklasse für verständliche Harness-Fehler."""
 
 
 class ToolError(HarnessError):
-    pass
+    """Unerlaubte/ungültige Anfrage; als Beobachtung ans Modell zurückgeben."""
 
 
 class SandboxError(HarnessError):
-    pass
+    """Ausführungsgrenze fehlt oder ist beschädigt; Lauf blockieren."""
 
 
 class ModelError(HarnessError):
-    pass
+    """Transport- oder Antwortfehler; nur begrenzt wiederholen."""
 
 
 class Cancelled(HarnessError):
-    pass
+    """Nutzerabbruch; keine weiteren Modellaktionen ausführen."""
 
 
 class LimitReached(HarnessError):
-    pass
+    """Budget erschöpft; Diff und bisherigen Befund sichern."""

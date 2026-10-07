@@ -1,43 +1,51 @@
-# Abgleich mit der vollständigen Stage-1-Aufgabe
+# Abgleich mit der Stage-1-PDF
 
-Quelle: `docs/assignment/stage-1-coding-harness.pdf`, vier Seiten einschließlich aller drei
-Diagramme. Die PDF ist maßgeblich; die Streamlit-/Docker-/Ollama-Details stammen zusätzlich
-aus `CODEX_PROMPT.md`. „Offen“ bedeutet ausdrücklich nicht bestanden.
+Alle vier Seiten wurden erneut gelesen. Die PDF ist maßgeblich. Stand: 07.10.2026.
+**Die aktuelle Version ist offline und mit fünf echten Docker-Tests geprüft. Die neue kleine
+Aufgabe prüft Stückzahlen im Belegdruck; echte 3B-Versuche sind separat dokumentiert. Ein erfolgreicher
+echter Bugfix und die vollständige Abgabe bleiben offen.**
 
-| PDF-Pflicht | Implementierung | Prüfung / tatsächlicher Nachweis |
+| PDF-Anforderung | Implementierung / Prüfung | Aktueller Stand |
 |---|---|---|
-| S.1: eigenes Python-Harness, kein fertiges Harness als Basis | `harness/`, eigener Controller und Tools | Quellcode; keine Delegation an Coding-CLIs |
-| S.1–2: Aufgabe über CLI/UI, Fortschritt, Dateien, Diff, Checks | `app.py`, `harness/__main__.py`, `service.py` | `test_ui.py`; Streamlit gestartet und Browseransicht visuell geprüft |
-| S.2: Dependencies, Beispielsettings ohne Secrets, Startbefehl | `requirements.lock`, `config.example.toml`, README | Installation in frischer Python-3.12-venv; `pip check` |
-| S.2: klare Verantwortlichkeiten | Controller, ModelClient, Workspace, RepositoryTools, DockerRunner, Verifier, RunStore | `docs/architecture.md`, zwei tatsächliche Mermaid-Diagramme |
-| S.2: Kontext ans Modell, Anfragen prüfen, Ergebnisse/Fehler zurückgeben | `controller.py`, `models.py`, `repository.py` | Controller- und HTTP-Protokolltests mit Scripted/MockTransport |
-| S.2–3: List/Read/Search/Edit im erlaubten Repository | feste Registry, Pydantic, eindeutiger Textaustausch | Datei-, Konflikt-, Binär-/Größen- und geschützte-Pfad-Tests |
-| S.2–3: enthaltene Ausführung, Ausgabe und Exit-Codes | Docker Linux, feste Check-IDs, begrenztes Streaming | echte Docker-Tests; Baseline und Simulation |
-| S.2–3: Aktions-/Ausgabelimits, Ablehnungen und Retries zählen | `Limits`, Controllerzähler, `BoundedOutput`, `RunStore` | Aktions-/Runden-/Retry-/Kontexttests, zeilenlose MiB-Ausgabe |
-| S.2: fehlgeschlagene/nicht verfügbare Checks sichtbar | vier Checkzustände, objektive Gesamtauswertung | Ergebnisstatus-Tests, tatsächliche rote Baseline und fehlgeschlagene Modellläufe |
-| S.3: wegwerfbare Kopie, Credentials und fremde Dateien schützen | Commit-Archiv pro Lauf, zwei Read-only-Mounts, kein Socket/Home/Secrets | Pfadtests und Docker-Mount-/UID-/Netztests |
-| S.3: Worktree allein genügt nicht | echte Docker-Grenze mit Ressourcenlimits | Docker-Integration besteht |
-| S.3: Anwendung validiert Rechte/Argumente, Texte sind untrusted | feste Tools, getrennte Konfiguration und Prüfdateien | unbekannte Tools, beschädigtes JSON, falsche Typen, Extra-Argumente abgewiesen |
-| S.3: Push, Merge, Deployment deaktiviert | keine entsprechenden Tools oder Shell-Schnittstelle | Registry-Test/Quellprüfung; nichts veröffentlicht |
-| S.3: hängenden Befehl samt Kindern stoppen, keine weiteren Writes | Stop/Force-remove/Abwesenheitsprüfung, Event-Abbruch, Toolgate | echte Timeout- und Abbruchtests mit schreibendem Kindprozess |
-| S.3: wiederholbare Tests ohne Konto/API-Key | ScriptedModelClient, Runner-Doubles | Offline-Kerntests; Docker-Tests separat markiert |
-| S.3 Tabelle: Dateiwerkzeuge, ungültige Anfrage, Controller | `tests/test_repository.py`, `test_controller.py` | bestanden; einschließlich Windows-Junction-Ausbruch |
-| S.3 Tabelle: Nonzero sichtbar, kein falscher Erfolg | `test_process.py`, `test_controller.py`, `test_docker.py` | Exit-Code 7 und begrenzte Ausgabe bleiben erhalten |
-| S.3 Tabelle: wiederholende Anfragen stoppen | Aktions-/Rundenlimit, Retrybudget | Kerntests; tatsächliche Live-Läufe endeten an Limits |
-| S.3 Tabelle: große Ausgabe begrenzt und markiert | Lese-Cap für stdout+stderr, HTTP-Antwortcap, Artefaktcap | Kern- und echte Docker-Tests bestanden |
-| S.3–4: Bug rot vor Fix, grün danach, vorhandene Tests grün | geschützte Akzeptanz und zwei Upstream-Regressionen | In der ausdrücklich simulierten Demonstration nachgewiesen; echter Modellnachweis offen |
-| S.4: öffentliches Python-Ziel, lokal ausführbar, Tests, ≥2 Module, Geschäftsregeln | OpenStock Flask → Operations → SQLite | Docker-Baseline: Positivkontrolle + 23/22 Regressionseinzelprüfungen |
-| S.4: exakter Commit, Aufgabe, Änderungsscope | `config/target.json`, `docs/task.md` | echter Git-Hash gespeichert, immer gleicher Commit |
-| S.4: Akzeptanztest außerhalb Schreibbereich, enthaltene Endprüfung | `/trusted` read-only, Hashprüfung vor/nach, unabhängige Suite | Mount-/Integritätstests und Docker-Gesamtläufe |
-| S.4: reale Modell-Demonstration mit erfolgreichem Diff und Checks | Ollama-Anbindung vorhanden, mehrere echte Versuche protokolliert | **Offen:** installiertes 7B-Modell erzeugte keinen erfolgreich verifizierten Fix |
-| S.4: manuelle Hilfe benennen | Task/Prompt/Versuche und Hilfe im Bericht/Dokumentation | `docs/verification.md`; Simulation enthält offen vorbereitete Antworten |
-| S.4 Abgabe: lauffähiger Code als Repository-Link, ggf. Commit | Quellcode vollständig im lokalen Projekt | **Nutzeraufgabe:** Commit und Repository bereitstellen; kein Push durchgeführt |
-| S.4 Abgabe: Secrets falls erforderlich | lokal, ohne API-Key, nur Wegwerf-Testpasswort | Keine echten Secrets nötig |
-| S.4 Abgabe: automatisierte Tests, kurze README, passende Diagramme | `tests/`, README, Architektur | vorhanden und geprüft |
-| S.4 Abgabe: Video ≤4 Minuten | Drehbuch mit 3:40 Inhalt | **Nutzeraufgabe:** aufnehmen und abgeben |
+| S.1 eigenes Python-Harness | eigenes `harness/`, kein fertiges Agentenprodukt | implementiert |
+| S.1–2 Eingabe, Fortschritt, Dateien, Diff, Checks | freie CLI-/UI-Eingabe, Worker, AppTest | offline geprüft |
+| S.2 Setup, Dependencies, Beispielsettings | README, Lockdatei, TOML, `setup`, `doctor` | vorhanden; frischer Gesamtaufbau nach Bereinigung noch offen |
+| S.2 klare Verantwortlichkeiten | kommentierte Module, Lernleitfaden und Diagramme | vorhanden |
+| S.2 Controller: Kontext, Validierung, Aktion, Beobachtung | Controller + Registry + Ollama-JSON | Scripted-/HTTP-Tests bestanden |
+| S.2 List/Read/Search/Edit im erlaubten Scope | RepositoryTools | Dateitests bestanden |
+| S.2 enthaltene Commands/Tests, Output/Exit-Code | DockerRunner + feste Check-IDs | 5 echte Docker-Tests bestanden |
+| S.2 Limits, Ablehnungen/Retrys zählen | Controller, Process, Store | Offline-Limit-/Ausgabetests bestanden |
+| S.2 failed/unavailable sichtbar trotz finish | Verifier, Bericht/UI | Offline-Statusprüfungen bestanden |
+| S.3 disposable copy, Hostdaten/Secrets außerhalb | Git-Archiv, getrennte Laufordner und minimale Mounts | echte Mount-/Isolationsprüfung bestanden |
+| S.3 echte Sandbox, keine reine Worktree-Grenze | nicht-root Linux-Container, Ressourcen-/Netz-/Mountgrenzen | aktuelle Docker-Prüfung bestanden |
+| S.3 Anwendungscode prüft Rechte, untrusted Eingaben | Pydantic, Registry, Pfadauflösung | Offline-Tests bestanden |
+| S.3 Push/Merge/Deployment deaktiviert | keine solchen Tools/keine freie Shell | implementiert |
+| S.3 festgefahrenen Command samt Kindern stoppen | Container entfernen und Abwesenheit prüfen | echte Timeout-/Abbruchtests bestanden |
+| S.3 Scripted-Tests ohne Konto/API-Key | ScriptedModelClient + FakeRunner nur für Tests | bestanden |
+| S.3 Testtabelle: Dateiwerkzeuge/Pfadgrenze | `test_repository.py` | bestanden |
+| S.3 Testtabelle: Controller/ungültige Requests | `test_controller.py`, `test_models.py` | bestanden |
+| S.3 Testtabelle: Nonzero mit Ausgabe | Prozess-, Controller-, Docker-Tests | offline und mit Docker bestanden |
+| S.3 Testtabelle: Aktionslimit | wiederholende/abgelehnte Tools und Retrys | bestanden |
+| S.3 Testtabelle: große Ausgabe begrenzt/markiert | Stream-, Kontext- und Artefakttests | offline und mit Docker bestanden |
+| S.3–4 Testtabelle: Rot-Grün + Regressionen | neuer deterministischer Docker-Bugfix-Test | Scripted-Rot-Grün-Bugfix mit Docker bestanden |
+| S.4 öffentliches lokales Pythonrepo, Tests, Module/Geschäftsregeln | Supermarket Receipt: Teller → Cart → Receipt; `docs/task.md` | erfüllt |
+| S.4 Repo/Commit/Task/Scope dokumentieren | Target-Konfiguration, frei eingegebener Prompt im Bericht, Task-Dokument | implementiert |
+| S.4 vorbereitete geschützte Akzeptanz | unveränderte Prüffiles außerhalb Kopie, read-only, Hashvergleich | rote Baseline am 07.10.2026 erneut nachgewiesen |
+| S.4 echter Modelllauf, Diff, grüne Akzeptanz/Regressionen, Hilfe offenlegen | Belegdruck-Aufgabe mit 3B und geschützter Akzeptanz; aktueller Befund in `docs/verification.md`, erfolgreicher Modellnachweis noch offen | **für aktuelle Version offen** |
+| S.4 Quellcode per Repositorylink | lokal vorhanden | **Veröffentlichung offen** |
+| S.4 Secrets falls nötig | lokales Ollama benötigt keine | nicht nötig |
+| S.4 README und passende Diagramme | aktualisierte README/Architektur/Lernleitfaden | vorhanden |
+| S.4 Video höchstens vier Minuten | Drehbuch vorhanden | **Aufnahme offen** |
 
-Zusätzliche Prompt-Anforderungen (deutsche UI, Windows/Linux-Befehle, Docker-Ressourcenlimits,
-unabhängige Endprüfung, feste Dependency-Versionen, Providerwechsel und Fortsetzungsstatus)
-sind in README, Architektur, Task- und Verifikationsbericht beschrieben. Nicht behauptet:
-erfolgreicher autonomer Live-Fix, sämtliche zusätzlichen Upstream-HTTP-Smokes oder eine
-frische Linux-Hostinstallation. Containerprüfungen liefen tatsächlich unter Linux.
+## Auflösung des Anforderungskonflikts
+
+Entfernt: Lösung im Prompt, gezielter Startausschnitt, Reparaturskript als Laufmodus und
+Demo/Frei-Sonderbehandlungen. Eigene Eingaben und ein stärkeres Modell sind möglich.
+
+Erhalten: fixierter Commit, erlaubte Dateien, geschützte Akzeptanz, feste Checkbefehle,
+Limits und deterministische Testantworten. Diese sind von der PDF gefordert oder bilden
+die ausführbare Berechtigungsgrenze. Sie garantieren keinen echten Modellerfolg.
+
+Ein echter erfolgreicher Bugfix-Nachweis bleibt laut PDF erforderlich, auch wenn der
+Lernschwerpunkt beim Harness liegt. Ein korrekter Limit-Abbruch demonstriert die Grenzen,
+ersetzt aber nicht den auf S.4 geforderten erfolgreichen Modellnachweis.

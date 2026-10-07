@@ -1,3 +1,5 @@
+"""Ereignisse und Endbericht als begrenzte, lesbare JSON-Dateien speichern."""
+
 from __future__ import annotations
 
 import copy
@@ -10,13 +12,20 @@ from harness.process import MARKER
 
 
 def clip(text: str, limit: int) -> tuple[str, bool]:
+    """Bytegrenze inklusive Kürzungsmarker; keine halben UTF-8-Zeichen ausgeben."""
     data = text.encode("utf-8")
     if len(data) <= limit:
         return text, False
-    return data[:max(0, limit-len(MARKER.encode()))].decode("utf-8", "ignore") + MARKER, True
+    return data[: max(0, limit - len(MARKER.encode()))].decode("utf-8", "ignore") + MARKER, True
 
 
 class RunStore:
+    """Thread-sichere Ereignisse für UI und Datei, atomarer Bericht am Laufende.
+
+    Budgetaufteilung: Hälfte für Ereignisse, je ein Viertel für Bericht und Diff.
+    Die UI bekommt Kopien, damit sie keine laufenden Controllerdaten verändert.
+    """
+
     def __init__(self, path: Path, artifact_bytes: int):
         self.path = path
         path.mkdir(parents=True, exist_ok=True)
@@ -34,7 +43,11 @@ class RunStore:
                 if self.events_truncated:
                     return
                 self.events_truncated = True
-                event = {"at": event["at"], "kind": "artifact_limit", "message": "Ereignisprotokoll gekürzt"}
+                event = {
+                    "at": event["at"],
+                    "kind": "artifact_limit",
+                    "message": "Ereignisprotokoll gekürzt",
+                }
                 line = json.dumps(event) + "\n"
             self.event_bytes += len(line.encode("utf-8"))
             self.events.append(event)
@@ -48,7 +61,7 @@ class RunStore:
     def report(self, report: dict) -> dict:
         value = copy.deepcopy(report)
         value["events_truncated"] = self.events_truncated
-        # The report always retains check statuses and exit codes, even if text needs shortening.
+        # Status und Exit-Code bleiben erhalten, auch wenn Ausgabetext gekürzt wird.
         checks = value.get("checks", [])
         text_budget = max(256, (self.budget // 4 - 32768) // max(1, len(checks) * 2))
         for check in checks:
@@ -57,7 +70,7 @@ class RunStore:
                 check["truncated"] = check.get("truncated", False) or shortened
         data = json.dumps(value, ensure_ascii=False, indent=2)
         if len(data.encode("utf-8")) > self.budget // 4:
-            # Metadata is bounded by config/round limits. Rare smallest-budget fallback.
+            # Sicherheitsreserve für kleine Budgets: Metadaten haben Vorrang vor Text.
             for check in checks:
                 check["stdout"], check["stderr"], check["truncated"] = MARKER, MARKER, True
             value["report_truncated"] = True

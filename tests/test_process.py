@@ -4,7 +4,10 @@ from harness.process import capture
 
 
 def test_newlineless_output_bounded_during_capture():
-    result = capture([sys.executable, "-c", "import os; os.write(1,b'x'*2000000); os.write(2,b'e'*1000000)"], limit=4096)
+    result = capture(
+        [sys.executable, "-c", "import os; os.write(1,b'x'*2000000); os.write(2,b'e'*1000000)"],
+        limit=4096,
+    )
     assert result.exit_code == 0 and result.truncated
     assert len(result.stdout.encode()) + len(result.stderr.encode()) <= 4096
 

@@ -1,14 +1,12 @@
-# Copying is optional. Environment variables override provider settings.
+# Optional nach config.local.toml kopieren. Umgebungsvariablen haben Vorrang.
+# Modellname ist frei wählbar; das Modell muss in Ollama installiert sein.
 ollama_base_url = "http://127.0.0.1:11434"
 model = "qwen2.5-coder:7b"
-# Explicit compatibility protocol: JSON-schema-constrained tool request.
-# "native" uses Ollama tool_calls directly; never interprets prose as an action.
-ollama_protocol = "json_schema"
 image = "docker.io/library/supermarket-harness:stage1"
 
 [limits]
-actions = 8
-rounds = 12
+actions = 40
+rounds = 50
 retries = 2
 check_seconds = 120
 model_seconds = 180

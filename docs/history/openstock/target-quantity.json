@@ -1,7 +1,0 @@
-{
-  "profile": "transfer_quantity",
-  "url": "https://github.com/TMBeaver/openstock",
-  "commit": "abc87dccab96c78917b35add542284e61adc5f37",
-  "editable": ["operations.py", "app.py"],
-  "task": "Lagertransfers müssen Mengen kleiner oder gleich null mit einem verständlichen HTTP-400-Fehler ablehnen. Enthält ein Transfer eine ungültige Position, dürfen keine Bestände verändert und keine Transferdokumente angelegt werden. Gültige positive Transfers müssen weiterhin korrekt funktionieren. Behalte bestehende Geschäftsregeln, Berechtigungen und das Datenbankschema bei."
-}

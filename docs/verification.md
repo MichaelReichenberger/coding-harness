@@ -1,103 +1,163 @@
-# Verifikationsbericht
+# Verifikation der vereinfachten Version
 
-Datum: **2026-10-05**, lokale Zeitzone Europe/Vienna. Lauf-IDs und JSON-Zeitstempel verwenden UTC.
+## Prüfung der einfacheren Belegdruck-Aufgabe am 07.10.2026
 
-## Tatsächliche Umgebung
+Auf Nutzerwunsch wurde die aktive Akzeptanz ausdrücklich auf einen einfacheren,
+im unveränderten öffentlichen Commit bereits vorhandenen Fehler umgestellt:
+Stückmengen auf dem Beleg ohne Nachkommastellen; Gewichte weiterhin mit drei.
+`Teller → ShoppingCart → Receipt → ReceiptPrinter` bleibt echtes Verhalten über Module.
+Es wurde kein künstlicher Fehler eingebaut und keine Reparatur im Modellprompt hinterlegt.
+Der alte Paarpreisfehler bleibt bestehen und ist nicht Teil dieser neuen Akzeptanz.
+Task, README, Lernleitfaden, Diagrammtext und deterministische Testfixture wurden angepasst.
 
-- Windows, Git `2.39.1.windows.1`, Python `3.12.14` aus der bereitgestellten Codex-Laufzeit.
-  `py -0p` fand im eingeschränkten Prozess keinen registrierten Interpreter; die lokale
-  `.venv` wurde mit dem vorhandenen absoluten Python-Pfad erstellt.
-- Docker-Client/Engine `28.0.4`, Desktop `4.40.0`, Linux/amd64.
-  Im eingeschränkten Prozess: Zugriff auf Docker-Konfiguration/Pipe verweigert.
-  In der genehmigten Ausführung: Daemon erreichbar und Container ausführbar.
-- Ollama `0.35.1`, `http://127.0.0.1:11434`, `qwen2.5-coder:7b` vorhanden
-  (4.683.087.561 Bytes, Quantisierung Q4_K_M). Kein Modell heruntergeladen.
-  HTTPX nutzt `trust_env=False`; ein direkter Aufruf mit `curl --noproxy '*'` bestätigte Zugriff.
-- Streamlit `1.65.0`, Pydantic `2.13.5`, HTTPX `0.28.1`, pytest `9.1.1`, Ruff `0.16.10`.
-  Alle aufgelösten Versionen stehen in `requirements.lock`; Image-Abhängigkeiten separat
-  in `sandbox/requirements.lock` (ReportLab 4.5.1 entspricht der Upstream-Bedingung `<5`).
-- Basisimage: `python:3.12-slim@sha256:02108f5d322dd89f1c9e552442c25acb0543dfdbc455693a5599624f20d9155d`.
-  Gebautes Image: `sha256:1d24aae80df4a1feb858d870c9ff76bff86a769008a0d96789b992d3be0f1242`.
-  Docker Desktop löste hier den kurzen Namen nicht zuverlässig auf; der vollständige
-  Standardname `docker.io/library/openstock-harness:stage1` funktioniert.
+- Baseline `20261007T151642Z-287617f6`: fachlich rot, drei Positivkontrollen grün,
+  beide Regressionen grün, `baseline_bug_reproduced=true`.
+- Offline: **59 bestanden, 5 Docker-Fälle übersprungen**, 9,80 s; Ruff bestanden.
+- Docker: **5 bestanden**, 27,11 s; nur eine Cache-Schreibwarnung unter Windows.
+  Der deterministische Rot-Grün-Test verwendet die neue Aufgabe, ausschließlich als Testfixture.
+- Echter 3B-Versuch `20261007T151803Z-9c20b765`: 29,5 s, 6 Aktionen, failed.
+  Das Modell rundete die gespeicherte Menge statt die Anzeige zu korrigieren.
+  Endakzeptanz blieb rot, beide Regressionen grün.
+- Zweiter echter Versuch `20261007T151855Z-fae2077a`: limit_reached nach 40 Aktionen.
+  Alle 40 Änderungsversuche wurden wegen fehlendem Quelltext abgelehnt; keine Änderung.
+  Endchecks nicht ausgeführt. Der präzisierte Nutzerprompt ist vollständig im Bericht.
+- Dritter Versuch mit kürzerem Verhaltensprompt: `20261007T152040Z-55037850`;
+  endgültiger Befund wird nach dem begrenzten Lauf ergänzt.
 
-## Ausgeführte Prüfungen
+Manuelle Hilfe: Auswahl der kleineren Aufgabe, geschützte Tests und zwei Änderungen
+an der Verhaltensbeschreibung. Keine Quellcodekorrektur und kein fertiger Patch wurde
+in einen echten Modelllauf eingefügt. Die folgenden Abschnitte dokumentieren die ältere
+Paarpreis-Aufgabe; ihre Berichte behalten ihre ursprünglichen Tests und Diffs.
 
-Die exakten abschließenden Ergebnisse stehen zusätzlich in `docs/implementation-status.md`.
+## Neuester Vergleich mit qwen2.5-coder:3b
 
-| Befehl / Handlung | Ergebnis |
+Lauf `20261007T151255Z-a166e6a4` am 07.10.2026 verwendete den unveränderten Prompt
+des 7B-Vergleichs, ohne Reparaturhinweis. Docker, Image und Ollama waren tatsächlich
+erreichbar. **30,5 Sekunden, 6 Aktionen/Anfragen, 0 Wiederholungen/Ablehnungen,
+keine Timeouts, failed.** Das Modell ersetzte `int(quantity)` durch
+`math.floor(quantity)`; der Fehler bei ungeraden Zweiermengen blieb bestehen.
+Baseline und Endakzeptanz rot, beide Regressionen jeweils grün. Sieben ausgeführte
+Checks bestätigten Container-Cleanup; danach keine Container in `docker ps -a`.
+Bericht und Diff: `.harness/runs/20261007T151255Z-a166e6a4/`.
+
+Ein zuvor in der UI gestarteter 3B-Lauf `20261007T151156Z-84c15522` endete ebenfalls
+failed (32,2 s, 4 Aktionen). Er änderte die Mindestmenge von 2 auf 3 und verschlechterte
+damit zusätzlich den Paarpreis. Kein Patch wurde in die Referenzkopie übernommen.
+
+Der tatsächlich gestartete 27B-Lauf `20261007T145028Z-32ae6491` ist inzwischen beendet:
+17 Minuten 13,7 Sekunden, **model_error**, 6 Anfragen, 4 Wiederholungen, 5 Aktionen,
+ein gültiger `list_files`-Aufruf und fünf Anfrage-Timeouts, keine Änderungen.
+Baseline fachlich rot, Regressionen grün; Endchecks nicht ausgeführt.
+Die beobachteten Timeouts belegen keinen RAM-Mangel. Ein erfolgreicher echter
+Modell-Bugfix ist weiterhin offen.
+
+## Früherer blockierter Versuch mit qwen3.8:27b
+
+Am 07.10.2026 war `qwen3.8:27b` tatsächlich installiert und Ollama erreichbar.
+Der identische Prompt des früheren Laufs wurde ohne Ergänzungen mit
+`HARNESS_MODEL=qwen3.8:27b` übergeben. Lauf `20261007T144809Z-a0d8b44d`:
+**blocked** bei der Docker-Vorprüfung (erneut HTTP 500), 0 Modellanfragen,
+keine Änderungen. Baseline/Endchecks nicht ausgeführt. Dies ist kein Ergebnis
+zur Leistungsfähigkeit dieses Modells; der echte Vergleich steht noch aus.
+
+Bericht lokal unter `.harness/runs/20261007T144809Z-a0d8b44d/report.json`.
+
+## Nachprüfung am 07.10.2026
+
+Docker und Ollama sind wieder erreichbar. `python -m harness doctor` meldete
+`sandbox_ready=true` und `live_ready=true`.
+
+`python -m pytest -q --docker -m docker -o cache_dir=.harness/retry-docker-cache
+--basetemp=.harness/retry-docker-tests`: **5 bestanden, 59 abgewählt**, 29,08 s.
+Eine Windows-Dateirechtewarnung betraf nur das Schreiben des pytest-Caches.
+Die echte Isolations-/Prozessprüfung und der deterministische Rot-Grün-Bugfix sind bestanden.
+
+Echter Ollama-Lauf `20261007T142611Z-3ff946cd`: 14:26:11–14:27:06 UTC,
+54,3 s, `qwen2.5-coder:7b`, 7 Aktionen/Anfragen, keine Ablehnungen/Wiederholungen.
+Der Nutzerprompt beschreibt Zweierpreise und verlangt Untersuchung/Tests, ohne Lösungsvorgabe.
+Das Modell suchte in sechs Dateien nach `calculate_total_price`, fand keine Treffer
+und rief `finish` auf. **Keine Änderungen, leerer Diff, Ergebnis failed.**
+
+Baseline: Akzeptanz fachlich rot, beide Regressionen grün, `baseline_bug_reproduced=true`.
+Endprüfung: Akzeptanz weiterhin rot, beide Regressionen grün. Alle sechs Checks bestätigten
+Cleanup; keine Container blieben zurück. Bericht/Ereignisse/Diff liegen lokal unter
+`.harness/runs/20261007T142611Z-3ff946cd/`.
+
+Damit ist die aktuelle Sandbox nachgewiesen. Der erfolgreiche echte Modell-Bugfix
+bleibt offen. Es wurde kein Patch eingespielt und kein stärkeres Modell heruntergeladen.
+Die nachfolgenden Abschnitte beschreiben den früheren Stand vom 06.10.2026.
+
+Stand: **06.10.2026**. Windows, Python 3.12.14, Streamlit 1.65.0,
+Pydantic 2.13.5, HTTPX 0.28.1, pytest 9.1.1. Alle vier PDF-Seiten wurden erneut gelesen.
+
+## Tatsächlich ausgeführt
+
+| Prüfung | Ergebnis |
 |---|---|
-| Git-Klon + `rev-parse HEAD` | Commit `abc87dccab96c78917b35add542284e61adc5f37` tatsächlich ermittelt |
-| `docker build --tag openstock-harness:stage1 sandbox` | erfolgreich, Bibliotheken innerhalb der Upstream-Versionsbereiche |
-| `python -m harness doctor` mit Dockerrechten | alle Komponenten erreichbar, Linux-Daemon, fixierter Commit und Modell vorhanden |
-| `python -m pytest -q` | Offline-Tests erfolgreich; vier Docker-Fälle ausdrücklich ausgelassen |
-| `python -m pytest -q --docker -m docker --basetemp .harness/docker-pytest-1 -o cache_dir=.harness/docker-pytest-cache` | **4 bestanden**: Read-only/UID/Netz/Capabilities, Nonzero/Ausgabelimit, Timeout mit Kindprozess, Abbruch mit Kindprozess |
-| Frische `.harness/fresh-env` + `pip install -r requirements.lock` | vollständige Installation erfolgreich; keine vorhandene `.venv` wiederverwendet |
-| Streamlit-Start auf 127.0.0.1:8501 | Server gestartet; UI im Browser geladen und visuell geprüft |
-| Streamlit AppTest | Start, Rerun ohne Doppelstart, Status, Abbruchverbindung, fehlende Checks, Simulation und Downloads geprüft |
-| Abschließender Lauf in frischer venv | **54 bestanden, 4 ausdrücklich ausgelassen**; pip check und Ruff erfolgreich |
-| `python -m harness run --provider scripted` | Lauf `20261005T161522Z-71017deb`: 5 Aktionen, Akzeptanz 5/5, Regression 23 + 22, unabhängige Endprüfung bestanden; **simuliert** |
+| `python -m pytest -q` (eigene Temp-/Cacheordner) | **59 bestanden, 5 Docker-Tests ausdrücklich übersprungen**, 8,11 s |
+| `python -m ruff check harness app.py tests checks/entry.py checks/acceptance.py checks/scenario.py checks/pricing_regression.py` | **bestanden** |
+| `python -m pip install --dry-run --no-index -r requirements.lock` | **bestanden**, alle 49 benötigten fixierten Pakete in vorhandener venv; keine frische Installation |
+| Streamlit AppTest | innerhalb der 59 Tests: leeres Aufgabenfeld, eigener Prompt/Modell, Start/Rerun/Abbruch, Ergebnisse/Downloads |
+| `python -m harness doctor` aus freigegebener tatsächlicher Ausführung | Python/Pakete/Git/Commit bereit; Ollama erreichbar, `qwen2.5-coder:7b` installiert; **Docker HTTP 500** |
+| `python -m pytest -q --docker -m docker -x` | **1 Setupfehler**, anschließend gestoppt: keine nutzbare Linux-Engine; kein grüner Sandbox-Nachweis |
+| Neuer echter Harness-Versuch | **blocked**, vor Modellaufruf; Lauf `20261006T201836Z-e6d5917b` |
+| Streamlit-Server und Browser | auf `http://127.0.0.1:8501/` neu gestartet; leeres Aufgabenfeld, Modellauswahl, sechs erlaubte Dateien und 0/40 Aktionen sichtbar geprüft |
 
-Der erste Docker-Testversuch scheiterte an den Windows-Rechten des von einem anderen
-Ausführungsbenutzer erstellten pytest-Tempordners. Ein eigenes `--basetemp` im Projekt
-behebt diesen Umgebungsfehler. Keine Tests wurden entfernt oder mit falschem Erfolg markiert.
-Eine anfänglich fehlende tmpfs-Mountpoint-Struktur wurde im Workspace-Setup korrigiert;
-die anschließende echte Baseline lief erfolgreich. Ein Testparameter brauchte einen kurzen
-pytest-ID-Namen, weil ein 300-KiB-Wert als automatischer Testname die Windows-Pfadgrenze traf.
+Der endgültige Offline-Befehl war:
 
-## Fachliche Baseline und reale Modellversuche
+```powershell
+.\.venv\Scripts\python.exe -m pytest -q -o cache_dir=.harness/readable-final-cache --basetemp=.harness/readable-final-tests
+```
 
-| Lauf-ID | Modus | Tatsächliches Ergebnis |
-|---|---|---|
-| `20261005T154625Z-09ee0eaa` | Baseline ohne Agentenänderung | Positivkontrolle bestanden; vier ungültige Fälle fachlich fehlgeschlagen; 23 + 22 Regressionseinzelprüfungen bestanden |
-| `20261005T155128Z-94136bb0` | echtes Ollama, natives Toolprotokoll | 50 Runden, keine ausführbaren nativen Toolcalls, sicher am Rundenlimit beendet; kein Fix |
-| `20261005T155940Z-2f092428` | echtes Ollama, JSON-Schema | 40 gezählte/abgewiesene Werkzeugversuche, Aktionslimit; kein Fix |
-| `20261005T160314Z-d380f53e` | echtes Ollama, verbesserte Beobachtungen | Modell erzeugte einen fehlerhaften Patch (Variable außerhalb ihrer Schleife); HTTP-500-Fehler korrekt erkannt. Nach 18 Aktionen zur Diagnoseentwicklung manuell beendet |
-| `20261005T160835Z-17fe5fe5` | echtes Ollama, offengelegter fachlicher Hinweis | Modell kopierte Zeilennummern/ungeeignete Textblöcke; Ersetzungen sicher abgewiesen. Auf Nutzerwunsch zum Abschluss beendet; kein erfolgreicher Live-Nachweis |
+Der explizite Docker-Versuch verwendete `.harness/readable-docker-cache` und
+`.harness/readable-docker-tests`. Der zusätzliche fünfte Docker-Test für den
+Scripted-Rot-Grün-Bugfix wurde danach ergänzt und offline nur gesammelt, nicht ausgeführt.
 
-Die Entwicklungs-Terminalunterbrechungen der letzten beiden Versuche waren **kein Test
-des UI-Abbruchpfads**. Ereignisse, tatsächlicher Diff und `developer-interruption.json`
-bleiben lokal erhalten. Die produktive Abbruchfunktion und Container-Kindprozessbeendigung
-sind separat getestet. Kein echter Lauf wird als erfolgreich dargestellt.
+## Echter Versuch ohne Lösungsvorgabe
 
-Eine vollständige kleine Kopie des simulierten Erfolgs liegt in
-`docs/examples/scripted-success/` (Bericht, Ereignisse und Diff). Die Übersicht der echten
-Fehlversuche liegt in `docs/examples/live-attempts.json`. Die großen Arbeitskopien bleiben
-unter `.harness/` und gehören nicht in die Abgabehistorie.
+Prompt:
 
-## Manuelle Hilfe und Grenzen des Nachweises
+> Bei einem Zweierangebot werden ungerade Artikelmengen falsch berechnet. Drei Artikel
+> mit Einzelpreis 1,00 und einem Angebotspreis von 1,50 je Paar sollen insgesamt 2,50
+> kosten. Korrigiere das Verhalten und erhalte die anderen Preisregeln.
 
-Der Entwickler erstellte Aufgabenformulierung, initialen Quellkontext, geschützte Akzeptanz,
-synthetische Fixtures, unveränderten Regressionstest-Adapter und die Werkzeugdefinitionen.
-Nach dem nativen Protokollfehlschlag wurde der JSON-Schema-Modus ausdrücklich eingeführt.
-Die dritte Version benennt die Kontextdatei eindeutig und liefert Beobachtungen für dieses
-Protokoll als benannte User-Nachrichten. Im letzten Versuch gab ein zusätzlicher, im Task
-gespeicherter Hinweis die Validierungsstelle **innerhalb der Transfer-Schleife und Transaktion**
-an. Es wurde kein vorbereiteter Patch in einen echten Lauf eingespielt.
+Artefakte: `.harness/runs/20261006T201836Z-e6d5917b/`.
+Status `blocked`, 0 Aktionen, keine Modellanfrage, keine Codeänderung.
+Baseline und Endchecks sind `not_run`. Docker antwortete auf `/v1.48/info`:
+`request returned 500 Internal Server Error ... dockerDesktopLinuxEngine`.
+Das ist weder eine Modellniederlage noch ein erfolgreicher Modellnachweis.
 
-Ein vorbereitetes Patchskript existiert nur im eindeutig gekennzeichneten Scripted-Modus.
-Ein dort erfolgreicher Akzeptanz-/Regressionslauf bestätigt die gesamte technische Kette,
-aber nicht die Leistungsfähigkeit des echten Modells. Ein erfolgreicher echter Fix ist
-weiter offen. Daher lautet der Gesamtstand **implementiert und weitgehend geprüft,
-nicht vollständig nach den Abnahmekriterien verifiziert**.
+Ollama war tatsächlich erreichbar; ein stärkeres Modell wurde nicht heruntergeladen.
+Der frei gewählte Modellname lässt sich in der Seitenleiste oder per `HARNESS_MODEL` setzen.
 
-Nicht ausgeführt: alle weiteren Upstream-HTTP-Smokes, ein vollständiger frischer Linux-
-Hostaufbau, Videoaufnahme, Remote-Push/Merge/Deployment. Die Linux-Dockerprüfungen wurden
-tatsächlich durchgeführt; sie ersetzen keine Linux-Hostinstallation.
+## Historische Nachweise sauber getrennt
 
-## Konkrete Fortsetzung
+`docs/examples/live-success/` enthält einen echten Lauf vom 05.10.2026 mit genauer
+Reparaturanweisung und vorbereitetem Quellkontext. Dieser Bericht wird nicht verändert
+oder als Erfolg der aktuellen Version ausgegeben. Der damalige Verifikationsbericht
+steht unter `docs/history/assisted-version/verification.md`.
 
-1. Docker Desktop starten und im Benutzerprozess `python -m harness doctor` prüfen.
-2. Ein geeignetes lokal vorhandenes Modell konfigurieren; bei anderem Modell natives
-   Toolprotokoll erproben oder den ausdrücklich ausgewiesenen JSON-Schema-Modus verwenden.
-3. `python -m harness run --provider ollama` ausführen. Derselbe Commit, Akzeptanztest und
-   Adapter bleiben bestehen. Fehlversuche und manuelle Hilfe dokumentieren.
-4. Nur wenn Baseline fachlich rot, unabhängige End-Akzeptanz und beide Regressionen grün
-   sind, den Live-Nachweis als erfüllt markieren und dessen Bericht/Diff sichern.
-5. Repository selbst bereitstellen und Video gemäß `docs/demo-script.md` aufnehmen.
+Damals bestanden vier echte Docker-Tests und zwei angeleitete Modellläufe. Seitdem wurden
+Controller, Bedienung und Prüfablauf vereinfacht. Das ersetzt keine erneute Abnahme.
 
-Bei unbestätigtem Cleanup nennt `.harness/runs/<ID>/active-container.json` ausschließlich
-den betreffenden Laufcontainer. Namen und `harness.run`-Label mit `docker inspect` prüfen,
-diesen Container gezielt mit `docker rm --force <Name>` entfernen, Abwesenheit mit
-`docker ps -a --filter name=<Name>` bestätigen. Erst danach die betreffende Registry-Datei
-entfernen. Niemals pauschal fremde Container oder Docker-Ressourcen löschen.
+## Reproduktion nach Beheben der Docker-Engine
+
+```powershell
+# Docker Desktop muss eine funktionsfähige Linux-Engine anzeigen.
+docker info --format '{{.OSType}}'
+.\.venv\Scripts\python.exe -m harness setup --build
+.\.venv\Scripts\python.exe -m harness doctor
+.\.venv\Scripts\python.exe -m pytest -q --docker -m docker
+.\.venv\Scripts\python.exe -m harness baseline
+# Name eines tatsächlich installierten Modells wählen, keinen Platzhalter belassen.
+$env:HARNESS_MODEL = 'NAME-DEINES-INSTALLIERTEN-MODELLS'
+.\.venv\Scripts\python.exe -m harness run --task 'Bei Zweierangeboten ist der Preis ungerader Mengen falsch. Drei Artikel à 1,00 mit Paarpreis 1,50 müssen 2,50 kosten. Korrigiere dies und erhalte andere Preisregeln.'
+```
+
+Erwarteter Harness-Nachweis: begrenzte Werkzeuge und nachvollziehbare Fehler auch bei
+Modellmisserfolg. Zusätzlich erforderlicher PDF-Erfolgsnachweis: fachlich rote Baseline,
+echter Modelldiff, danach grüne geschützte Akzeptanz und Regressionen. Das Modell darf
+scheitern; diese Abgabeanforderung bleibt dann offen. Manuelle Hilfen im Bericht/Video benennen.
+
+Noch nicht geprüft: neue frische Installation, Linux als Host, neue erfolgreiche reale
+Bugfix-Demonstration. Repositorylink und Video bis vier Minuten müssen noch eingereicht werden.

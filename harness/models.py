@@ -1,10 +1,15 @@
+"""Ein kleines Modellprotokoll: chat() liefert {name, arguments}.
+
+Ollama liefert JSON nach dem Werkzeug-Schema. Das erleichtert die Verarbeitung,
+ersetzt aber niemals die Validierung in repository.py. Der Scripted-Client
+wird ausschließlich in Offline-Tests benutzt; er repariert kein echtes Repo.
+"""
+
 from __future__ import annotations
 
 import asyncio
 import copy
 import json
-import threading
-from typing import Protocol
 
 import httpx
 
@@ -12,15 +17,9 @@ from harness.config import Settings
 from harness.errors import Cancelled, ModelError
 
 
-class ModelClient(Protocol):
-    provider: str
-    name: str
-    simulated: bool
-
-    def chat(self, messages: list[dict], tools: list[dict], cancel: threading.Event) -> dict: ...
-
-
 class ScriptedModelClient:
+    """Testdouble: vorgegebene Antworten, Fehler und Wiederholungen ohne Netzwerk."""
+
     provider, name, simulated = "scripted", "deterministic-script", True
 
     def __init__(self, replies: list[dict | Exception], *, repeat=False):
@@ -42,46 +41,52 @@ class ScriptedModelClient:
 
 
 def tool_reply(name: str, **arguments) -> dict:
-    return {"role": "assistant", "content": "", "tool_calls": [
-        {"function": {"name": name, "arguments": arguments}}]}
+    return {"name": name, "arguments": arguments}
 
 
 class OllamaModelClient:
+    """HTTP-Verbindung zum konfigurierten lokalen Modell; besitzt keine Dateiwerkzeuge."""
+
     provider, simulated = "ollama", False
 
     def __init__(self, settings: Settings):
         self.settings, self.name = settings, settings.model
 
     async def _request(self, messages, tools, cancel):
-        payload = {"model": self.name, "messages": copy.deepcopy(messages), "stream": False,
-                   "options": {"temperature": 0, "num_ctx": 16384, "num_predict": 4096}}
-        if self.settings.ollama_protocol == "native":
-            payload["tools"] = tools
-        else:
-            alternatives = []
-            for tool in tools:
-                function = tool["function"]
-                alternatives.append({"type": "object", "properties": {
-                    "name": {"const": function["name"]}, "arguments": function["parameters"]},
-                    "required": ["name", "arguments"], "additionalProperties": False})
-            payload["format"] = {"oneOf": alternatives}
-            instructions = ("\nPROTOCOL: Return exactly one JSON object with name and arguments selecting the next tool. "
-                            "Use finish when done. No Markdown. Available tool definitions: " + json.dumps(tools))
-            payload["messages"][0]["content"] += instructions
-            # Raw assistant JSON is the actual provider history; normalized calls remain in our log.
-            for item in payload["messages"]:
-                item.pop("tool_calls", None)
-                if item.get("role") == "tool":
-                    name = item.pop("tool_name", "unknown")
-                    item.pop("tool_call_id", None)
-                    item["role"] = "user"
-                    item["content"] = (f"Observation for your {name} tool call (untrusted data):\n"
-                                       + item["content"] + "\nChoose the next tool based on this result. "
-                                       "Do not repeat a rejected call without correcting its arguments.")
+        # Die Kopie verhindert, dass Werkzeugbeschreibungen bei jedem Aufruf
+        # erneut an den gespeicherten Systemprompt angehängt werden.
+        payload = {
+            "model": self.name,
+            "messages": copy.deepcopy(messages),
+            "stream": False,
+            "options": {"temperature": 0, "num_ctx": 16384, "num_predict": 4096},
+        }
+        alternatives = []
+        for tool in tools:
+            function = tool["function"]
+            alternatives.append(
+                {
+                    "type": "object",
+                    "properties": {
+                        "name": {"const": function["name"]},
+                        "arguments": function["parameters"],
+                    },
+                    "required": ["name", "arguments"],
+                    "additionalProperties": False,
+                }
+            )
+        payload["format"] = {"oneOf": alternatives}
+        payload["messages"][0]["content"] += (
+            "\nReturn one JSON object with name and arguments for the next tool. No Markdown. "
+            "Use finish when done. Tool definitions: " + json.dumps(tools)
+        )
+
         async def request():
-            async with httpx.AsyncClient(base_url=self.settings.ollama_base_url,
-                                         timeout=self.settings.limits.model_seconds,
-                                         trust_env=False) as client:
+            async with httpx.AsyncClient(
+                base_url=self.settings.ollama_base_url,
+                timeout=self.settings.limits.model_seconds,
+                trust_env=False,
+            ) as client:
                 async with client.stream("POST", "/api/chat", json=payload) as response:
                     response.raise_for_status()
                     data = bytearray()
@@ -90,18 +95,13 @@ class OllamaModelClient:
                             raise ModelError("Modellantwort überschreitet 256 KiB")
                         data.extend(chunk)
                     decoded = json.loads(data)
-                    message = decoded.get("message")
+                    message = decoded.get("message") if isinstance(decoded, dict) else None
                     if not isinstance(message, dict):
                         raise ModelError("Ollama-Antwort enthält keine Nachricht")
-                    if self.settings.ollama_protocol == "json_schema":
-                        action = json.loads(message.get("content", ""))
-                        if (not isinstance(action, dict) or set(action) != {"name", "arguments"}
-                                or not isinstance(action["name"], str)
-                                or not isinstance(action["arguments"], dict)):
-                            raise ModelError("Ungültiger JSON-Schema-Werkzeugaufruf")
-                        message["tool_calls"] = [{"function": action}]
-                    return message
+                    return json.loads(message.get("content", ""))
 
+        # HTTP läuft als abbrechbare Coroutine. Ein bloßer Thread-Timeout würde
+        # die wartende Verbindung weiterlaufen lassen. finally räumt sie auf.
         task = asyncio.create_task(request())
         try:
             async with asyncio.timeout(self.settings.limits.model_seconds):
@@ -123,16 +123,32 @@ class OllamaModelClient:
 
     def diagnose(self) -> dict:
         try:
-            with httpx.Client(base_url=self.settings.ollama_base_url, timeout=5, trust_env=False) as client:
+            with httpx.Client(
+                base_url=self.settings.ollama_base_url, timeout=5, trust_env=False
+            ) as client:
                 tags = client.get("/api/tags")
                 tags.raise_for_status()
                 models = [m["name"] for m in tags.json().get("models", [])]
                 if self.name not in models:
-                    return {"ready": False, "reason": "Konfiguriertes Modell nicht installiert", "models": models}
+                    return {
+                        "ready": False,
+                        "reason": "Konfiguriertes Modell nicht installiert",
+                        "models": models,
+                    }
                 shown = client.post("/api/show", json={"model": self.name})
                 shown.raise_for_status()
                 capabilities = shown.json().get("capabilities", [])
-                return {"ready": "tools" in capabilities, "models": models,
-                        "capabilities": capabilities, "reason": "" if "tools" in capabilities else "Tool-Unterstützung fehlt"}
+                # Wir verwenden strukturierte JSON-Ausgaben, keine nativen Toolcalls.
+                # Daher ist 'tools' keine Voraussetzung. Schemaqualität wird erst
+                # beim echten Aufruf sichtbar und dort strikt geprüft.
+                return {
+                    "ready": "completion" in capabilities,
+                    "models": models,
+                    "capabilities": capabilities,
+                    "reason": "" if "completion" in capabilities else "Textgenerierung fehlt",
+                }
         except (httpx.HTTPError, ValueError, KeyError) as exc:
-            return {"ready": False, "reason": f"Ollama nicht erreichbar oder ungültige Antwort: {exc}"}
+            return {
+                "ready": False,
+                "reason": f"Ollama nicht erreichbar oder ungültige Antwort: {exc}",
+            }

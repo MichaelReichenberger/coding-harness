@@ -1,3 +1,5 @@
+"""Führt geschützte Checks aus und bewertet ausschließlich deren Ergebnisse."""
+
 from __future__ import annotations
 
 import json
@@ -8,6 +10,7 @@ from harness.sandbox import CHECKS, CheckResult
 
 
 def acceptance_evidence(result: CheckResult) -> dict:
+    """Liest den maschinenlesbaren Befund des Belegdruck-Tests für den Bericht."""
     for line in reversed(result.stdout.splitlines()):
         if line.startswith("HARNESS_ACCEPTANCE="):
             try:
@@ -18,27 +21,50 @@ def acceptance_evidence(result: CheckResult) -> dict:
 
 
 def baseline_reproduces(results: dict[str, CheckResult]) -> bool:
+    """PDF-Nachweis: fachlicher Fehler statt fehlender Bibliothek oder kaputter Tests.
+
+    Dies beschreibt unseren ausgewählten Akzeptanztest, keine Lösungsvorgabe.
+    Der Controller verwendet es nur für den Bericht, nicht zum Steuern des Modells.
+    """
     acceptance = results.get("acceptance", CheckResult("acceptance"))
     evidence = acceptance_evidence(acceptance)
-    return (acceptance.status == "failed" and acceptance.exit_code == 1
-            and not acceptance.timed_out and not acceptance.cancelled
-            and acceptance.cleanup_verified
-            and evidence.get("positive_control") is True
-            and not evidence.get("infrastructure_errors", ["missing"])
-            and set(evidence.get("business_failures", [])) == {"odd_3", "odd_5", "odd_7"}
-            and all(results.get(c, CheckResult(c)).status == "passed"
-                    and results[c].exit_code == 0 and results[c].cleanup_verified
-                    and not results[c].timed_out and not results[c].cancelled
-                    for c in CHECKS if c != "acceptance"))
+    return (
+        acceptance.status == "failed"
+        and acceptance.exit_code == 1
+        and not acceptance.timed_out
+        and not acceptance.cancelled
+        and acceptance.cleanup_verified
+        and evidence.get("positive_control") is True
+        and not evidence.get("infrastructure_errors", ["missing"])
+        and set(evidence.get("business_failures", [])) == {"each_2", "each_3", "each_5"}
+        and all(
+            results.get(c, CheckResult(c)).status == "passed"
+            and results[c].exit_code == 0
+            and results[c].cleanup_verified
+            and not results[c].timed_out
+            and not results[c].cancelled
+            for c in CHECKS
+            if c != "acceptance"
+        )
+    )
 
 
 def all_passed(results: dict[str, CheckResult]) -> bool:
-    return all(c in results and results[c].status == "passed" and results[c].exit_code == 0
-               and not results[c].timed_out and not results[c].cancelled
-               and results[c].cleanup_verified for c in CHECKS)
+    """Fehlender Check, Timeout oder unbestätigtes Containerende verhindert Erfolg."""
+    return all(
+        c in results
+        and results[c].status == "passed"
+        and results[c].exit_code == 0
+        and not results[c].timed_out
+        and not results[c].cancelled
+        and results[c].cleanup_verified
+        for c in CHECKS
+    )
 
 
 class Verifier:
+    """Einheitlicher Aufruf für Baseline, Modell-Check und unabhängige Endprüfung."""
+
     def __init__(self, runner, store, cancel: threading.Event):
         self.runner, self.store, self.cancel = runner, store, cancel
         self.records: list[dict] = []

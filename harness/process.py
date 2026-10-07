@@ -1,4 +1,10 @@
-"""Bounded subprocess capture for trusted Git/Docker commands only."""
+"""Begrenztes Einlesen vertrauenswürdiger Git-/Docker-Prozesse.
+
+Diese Funktion ist keine Sandbox. Zielcode darf nur über DockerRunner laufen.
+Bei Timeout beendet capture den lokalen CLI-Prozess; DockerRunner muss danach
+zusätzlich den Container samt Kindprozessen entfernen.
+"""
+
 from __future__ import annotations
 
 import subprocess
@@ -10,6 +16,8 @@ MARKER = "\n[Ausgabe gekürzt]\n"
 
 
 class BoundedOutput:
+    """Ein gemeinsames Bytebudget für stdout und stderr, geschützt vor Threadrennen."""
+
     def __init__(self, limit: int):
         self.limit = limit
         self.data = {"stdout": bytearray(), "stderr": bytearray()}
@@ -30,6 +38,8 @@ class BoundedOutput:
 
 @dataclass
 class ProcessResult:
+    """Rohbefund eines lokalen Befehls, unabhängig von seiner Textausgabe."""
+
     command: list[str]
     exit_code: int | None
     stdout: str = ""
@@ -40,22 +50,34 @@ class ProcessResult:
     seconds: float = 0
 
 
-def capture(command: list[str], *, timeout: float = 15, limit: int = 65536,
-            cancel: threading.Event | None = None, cwd=None) -> ProcessResult:
+def capture(
+    command: list[str],
+    *,
+    timeout: float = 15,
+    limit: int = 65536,
+    cancel: threading.Event | None = None,
+    cwd=None,
+) -> ProcessResult:
     started = time.monotonic()
     out = BoundedOutput(limit)
-    process = subprocess.Popen(command, cwd=cwd, stdin=subprocess.DEVNULL,
-                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    process = subprocess.Popen(
+        command, cwd=cwd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
 
     def drain(pipe, channel):
+        # Weiter lesen, auch wenn das Budget voll ist. Sonst könnte ein voller
+        # Pipe-Puffer den Kindprozess blockieren. Keine readline()-Aufrufe:
+        # auch eine einzige endlose Zeile muss begrenzt bleiben.
         try:
             while chunk := pipe.read1(4096):
                 out.add(channel, chunk)
         finally:
             pipe.close()
 
-    threads = [threading.Thread(target=drain, args=(pipe, channel), daemon=True)
-               for pipe, channel in [(process.stdout, "stdout"), (process.stderr, "stderr")]]
+    threads = [
+        threading.Thread(target=drain, args=(pipe, channel), daemon=True)
+        for pipe, channel in [(process.stdout, "stdout"), (process.stderr, "stderr")]
+    ]
     for thread in threads:
         thread.start()
     timed_out = cancelled = False
@@ -69,5 +91,13 @@ def capture(command: list[str], *, timeout: float = 15, limit: int = 65536,
     process.wait(timeout=5)
     for thread in threads:
         thread.join(timeout=5)
-    return ProcessResult(command, process.returncode, out.text("stdout"), out.text("stderr"),
-                         out.truncated, timed_out, cancelled, time.monotonic() - started)
+    return ProcessResult(
+        command,
+        process.returncode,
+        out.text("stdout"),
+        out.text("stderr"),
+        out.truncated,
+        timed_out,
+        cancelled,
+        time.monotonic() - started,
+    )

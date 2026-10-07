@@ -1,13 +1,12 @@
+# Python 3.12: festgelegte Laufzeit-, pytest- und Ruff-Abhängigkeiten.
 altair==6.3.0
 annotated-types==0.8.0
 anyio==4.15.1
 attrs==26.1.0
-blinker==1.9.0
 certifi==2026.7.22
 charset-normalizer==3.5.2
 click==8.5.0
 colorama==0.4.6
-Flask==3.1.3
 h11==0.16.0
 httpcore==1.0.9
 httptools==0.8.0
@@ -35,7 +34,6 @@ pytest==9.1.1
 python-dateutil==2.9.0.post0
 python-multipart==0.0.32
 referencing==0.37.0
-reportlab==4.5.1
 requests==2.34.2
 rpds-py==2026.9.1
 ruff==0.16.10
@@ -43,12 +41,10 @@ six==1.17.0
 starlette==1.7.0
 streamlit==1.65.0
 toml==0.10.2
-typing-inspection==0.4.4
 typing_extensions==4.16.0
+typing-inspection==0.4.4
 tzdata==2026.5
 urllib3==2.8.0
 uvicorn==0.54.0
-waitress==3.0.2
 watchdog==6.0.0
 websockets==17.2
-Werkzeug==3.1.9

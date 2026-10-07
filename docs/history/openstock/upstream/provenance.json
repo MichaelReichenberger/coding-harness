@@ -1,9 +1,0 @@
-{
-  "url": "https://github.com/TMBeaver/openstock",
-  "commit": "abc87dccab96c78917b35add542284e61adc5f37",
-  "sha256": {
-    "LICENSE": "efc883e3ef2e6caa9110150b23d9afa440e45c9cae3a48b94c2f970e3b169e7a",
-    "test_core.py": "bdd04159e1db3a335e875a227792a69e3bd5d1eb77f6eace0f7b6c56000bbf90",
-    "test_reversal_advances.py": "e5de1ee408620d4844be9ab5f8d0982a9b38766e391c17a5f847477f0a1eeb28"
-  }
-}

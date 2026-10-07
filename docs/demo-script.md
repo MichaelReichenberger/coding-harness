@@ -1,33 +1,23 @@
-# Drehbuch: maximal vier Minuten
+# Video-Drehbuch: maximal 3:40 Minuten Inhalt
 
-Geplante Inhaltsdauer **3:40**, 20 Sekunden Reserve. Aufnahme und Repository-Abgabe sind
-Nutzeraufgaben. Die Implementierung erzeugt kein Video. Vor der Aufnahme `doctor` ausführen,
-UI starten und die gewünschten lokalen Laufartefakte bereithalten.
+Die PDF erlaubt höchstens vier Minuten. Erst aufnehmen, wenn Docker funktioniert und
+ein echter Lauf mit dem gewünschten Modell vorliegt. Kein vorbereiteter Patch wird abgespielt.
 
-| Zeit | Bild | Aussage / Aktion |
-|---|---|---|
-| 0:00–0:20 | UI mit Ziel und Commit | Eigenes Python-Harness; Modellcontroller außerhalb einer Linux-Docker-Sandbox. OpenStock-Commit zeigen. |
-| 0:20–0:45 | Aufgabe und `docs/architecture.md` | Mengen ≤0 müssen HTTP 400 liefern; keine Teilbuchungen. App, Operations und SQLite arbeiten zusammen. |
-| 0:45–1:10 | Baseline-Checks | Positivkontrolle grün. −1, 0 und gemischte Positionen erhalten vorher fälschlich HTTP 200. Bestehende Regressionen sind grün. |
-| 1:10–2:05 | „Lauf starten“, Verlauf | Controller prüft strukturierte Anfragen, führt eigene Dateiwerkzeuge aus und gibt Beobachtungen zurück. Wartezeit nur sichtbar als Zeitraffer/Schnitt kürzen. Abbruchknopf zeigen. |
-| 2:05–2:35 | Dateien & Diff | Kleinen Patch in der Transferlogik zeigen. Erlaubter Scope operations.py/app.py; keine Tests vom Agenten geändert. |
-| 2:35–3:05 | Checks | Unabhängige Endprüfung: alle fünf Akzeptanzfälle und beide unveränderten Regressionen. Status/Exit-Codes und geschützte Checks zeigen. |
-| 3:05–3:25 | Download/Report | Lauf-ID, Provider, Modell, Commit, Aktionen, Fehlversuche, manuelle Hilfe und Diff herunterladen. |
-| 3:25–3:40 | Grenzen | Ein lokaler Nutzer, feste Checks, keine Host-Shell, keine Push-/Merge-Werkzeuge. Infrastruktur und Modellqualität begrenzen den Lauf. |
+| Zeit | Bild und Erklärung |
+|---|---|
+| 0:00–0:25 | Eigenes Python-Harness; Repository und exakten Ausgangscommit zeigen. |
+| 0:25–0:50 | Leeres Aufgabenfeld, installierten Modellnamen und selbst formulierten Bugfix-Prompt zeigen. Fachliche Stückmengen-Anforderung ohne Reparaturanweisung erklären. |
+| 0:50–1:15 | Vorbereitete geschützte Akzeptanz: rote ungerade Mengen, grüne Kontrollen und Regressionen. |
+| 1:15–2:00 | Echten Lauf: Modell liest/sucht, Harness validiert und zählt, Tools liefern Beobachtungen. Wartezeiten transparent kürzen. |
+| 2:00–2:30 | Tatsächlich entstandenen Diff zeigen; keine bestimmte Änderung vorwegnehmen. |
+| 2:30–2:55 | Unabhängige Endprüfung mit grüner Akzeptanz und vorhandenen Regressionstests. |
+| 2:55–3:20 | Controller-Schleife, Dockergrenze, Aktions-/Zeit-/Ausgabelimits erläutern. |
+| 3:20–3:40 | Bericht/Downloads, manuelle Testvorbereitung und verbleibende Grenzen nennen. |
 
-## Ehrliche Darstellung des aktuellen Stands
+Zusätzlich kann ein automatisierter Limit-Test kurz gezeigt werden. Er ist ausdrücklich
+simuliert. Ein gescheiterter Modelllauf wird ehrlich ausgewiesen und ersetzt nicht den
+von der PDF verlangten erfolgreichen Bugfix-Nachweis. Falls der Prüfer mit einem anderen
+Prompt experimentiert, die Reichweite der vorhandenen Akzeptanz erklären.
 
-Der erfolgreiche deterministische Lauf ist **SIMULIERT**: Die Antworten einschließlich
-Patch stammen aus `scripted_demo()`. Modellclient und Controller laufen dabei echt, ebenso
-die Docker-Prüfungen; er erfüllt aber **nicht** die PDF-Forderung eines erfolgreichen echten
-Modelllaufs. Diese Einblendung muss während einer simulierten Demonstration sichtbar sein.
-
-Die realen Ollama-Versuche waren nicht erfolgreich. Soll das Video die vollständige
-Abnahmeforderung erfüllen, muss vorher ein echter Lauf mit einem geeigneten Modell gelingen.
-Dafür ein bereits vorhandenes geeignetes Modell über `HARNESS_MODEL` wählen, Protokoll
-einstellen und `python -m harness run --provider ollama` ausführen. Ein neuer Lauf beginnt
-vom fixierten Commit; der geschützte Akzeptanztest bleibt bestehen. Keinen Simulationspatch
-als Modellarbeit ausgeben. Manuelle Hinweise, Modellwechsel und Wiederholungen nennen.
-
-Bei einem weiter fehlschlagenden Live-Lauf dessen tatsächlichen Status vorführen und den
-offenen Nachweis benennen. Kein „alle Tests grün“ behaupten, wenn Pflichtprüfungen fehlen.
+Historische Läufe mit Lösungshilfe nur als solche benennen. Für die neue Fassung einen
+neuen Lauf verwenden. Repositorylink und Videoaufnahme sind weiterhin Nutzeraufgaben.

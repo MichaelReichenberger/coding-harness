@@ -1,3 +1,10 @@
+"""Fixierter Quellstand, wegwerfbare Laufkopie, Diff und prozessübergreifende Sperre.
+
+Keine Git-Änderung des Nutzers wird zurückgesetzt. git archive liest ausschließlich
+den versionierten Commit in der Referenz. repo wird bearbeitet, base bleibt als
+Vergleichskopie bestehen. Das Modell sieht weder base noch den Git-Referenzbereich.
+"""
+
 from __future__ import annotations
 
 import difflib
@@ -17,9 +24,17 @@ from harness.process import capture
 
 
 def git_args(repo: Path, *args: str) -> list[str]:
-    # Scoped to this known checkout; never change the user's global Git config.
-    return ["git", "-c", f"safe.directory={repo.resolve().as_posix()}",
-            "-c", "core.autocrlf=false", "-C", str(repo), *args]
+    # Gilt nur für diesen Befehl und diese Kopie, nie für die globale Git-Konfiguration.
+    return [
+        "git",
+        "-c",
+        f"safe.directory={repo.resolve().as_posix()}",
+        "-c",
+        "core.autocrlf=false",
+        "-C",
+        str(repo),
+        *args,
+    ]
 
 
 def require_git(repo: Path, *args: str) -> str:
@@ -30,6 +45,7 @@ def require_git(repo: Path, *args: str) -> str:
 
 
 def prepare_reference(target: Target, reference: Path) -> None:
+    """Bei Bedarf klonen; URL und tatsächlichen Commit vor Verwendung prüfen."""
     if not reference.exists():
         reference.parent.mkdir(parents=True, exist_ok=True)
         result = capture(["git", "clone", "--no-checkout", target.url, str(reference)], timeout=180)
@@ -43,17 +59,20 @@ def prepare_reference(target: Target, reference: Path) -> None:
 
 
 def export_commit(reference: Path, commit: str, destination: Path, subdirectory: str = "") -> None:
-    # Archive reads committed bytes only, ignoring dirty/untracked files and user configuration.
+    # Kein Checkout mit lokalen Änderungen: nur die Bytes des festgelegten Commits.
     archive = destination.parent / "source.zip"
     tree = f"{commit}:{subdirectory}" if subdirectory else commit
-    result = capture(git_args(reference, "archive", "--format=zip", f"--output={archive}", tree),
-                     timeout=30)
+    result = capture(
+        git_args(reference, "archive", "--format=zip", f"--output={archive}", tree), timeout=30
+    )
     if result.exit_code or result.timed_out:
         raise HarnessError(result.stderr or "Export fehlgeschlagen")
     try:
         if archive.stat().st_size > 20 * 1024 * 1024:
             raise HarnessError("Repository-Archiv überschreitet 20 MiB")
         with zipfile.ZipFile(archive) as source:
+            # Auch ein öffentliches Repository ist untrusted. Archive dürfen keine
+            # Pfadausbrüche/Symlinks oder unbegrenzt große Inhalte einschleusen.
             if sum(i.file_size for i in source.infolist()) > 40 * 1024 * 1024:
                 raise HarnessError("Repository überschreitet 40 MiB")
             for entry in source.infolist():
@@ -76,11 +95,16 @@ def export_commit(reference: Path, commit: str, destination: Path, subdirectory:
 
 
 def tree_hashes(root: Path) -> dict[str, str]:
-    return {p.relative_to(root).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
-            for p in sorted(root.rglob("*")) if p.is_file() and "__pycache__" not in p.parts}
+    return {
+        p.relative_to(root).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
+        for p in sorted(root.rglob("*"))
+        if p.is_file() and "__pycache__" not in p.parts
+    }
 
 
 class Workspace:
+    """Ordner und Ausgangsstand eines einzigen Laufs, inklusive vollständigem Diff."""
+
     def __init__(self, target: Target, home: Path | None = None):
         self.target = target
         self.home = (home or ROOT / ".harness").resolve()
@@ -97,6 +121,7 @@ class Workspace:
         shutil.copytree(self.repo, self.base)
 
     def diff(self, limit: int = 2 * 1024 * 1024) -> tuple[str, list[str], bool]:
+        """Dateilisten bleiben vollständig; nur der Difftext kann gekürzt werden."""
         before, after = tree_hashes(self.base), tree_hashes(self.repo)
         changed = sorted(p for p in before.keys() | after.keys() if before.get(p) != after.get(p))
         output = io.StringIO()
@@ -109,16 +134,27 @@ class Workspace:
                 output.write("deleted file mode 100644\n")
             a = old.read_text("utf-8").splitlines(keepends=True) if old.exists() else []
             b = new.read_text("utf-8").splitlines(keepends=True) if new.exists() else []
-            for line in difflib.unified_diff(a, b, fromfile=f"a/{name}" if old.exists() else "/dev/null",
-                                             tofile=f"b/{name}" if new.exists() else "/dev/null"):
-                output.write(line if line.endswith("\n") else line + "\n\\ No newline at end of file\n")
+            for line in difflib.unified_diff(
+                a,
+                b,
+                fromfile=f"a/{name}" if old.exists() else "/dev/null",
+                tofile=f"b/{name}" if new.exists() else "/dev/null",
+            ):
+                output.write(
+                    line if line.endswith("\n") else line + "\n\\ No newline at end of file\n"
+                )
         data = output.getvalue().encode("utf-8")
         shortened = len(data) > limit
         return data[:limit].decode("utf-8", "ignore"), changed, shortened
 
 
 class RunLock:
-    """OS advisory lock, released by the OS if a controller crashes."""
+    """OS-Sperre gegen parallele CLI-/UI-Läufe, bei Prozessende automatisch gelöst.
+
+    Windows sperrt ein Byte in der Lockdatei, Unix die Datei via flock. Ihre
+    bloße Existenz reicht nicht: Eine normale Datei könnte nach Absturz verwaisen.
+    """
+
     def __init__(self, home: Path):
         home.mkdir(parents=True, exist_ok=True)
         self.file = (home / "active.lock").open("a+b")
@@ -128,9 +164,11 @@ class RunLock:
         try:
             if os.name == "nt":
                 import msvcrt
+
                 msvcrt.locking(self.file.fileno(), msvcrt.LK_NBLCK, 1)
             else:
                 import fcntl
+
                 fcntl.flock(self.file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
         except OSError as exc:
             self.file.close()
@@ -141,9 +179,11 @@ class RunLock:
             return
         if os.name == "nt":
             import msvcrt
+
             self.file.seek(0)
             msvcrt.locking(self.file.fileno(), msvcrt.LK_UNLCK, 1)
         else:
             import fcntl
+
             fcntl.flock(self.file.fileno(), fcntl.LOCK_UN)
         self.file.close()

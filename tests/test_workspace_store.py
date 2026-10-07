@@ -1,4 +1,3 @@
-
 import pytest
 
 from harness.config import Settings, load_target
@@ -33,7 +32,9 @@ def test_event_storage_bounded_and_status_retained(tmp_path):
     store = RunStore(tmp_path, 65536)
     for _ in range(100):
         store.event("large", output="x" * 5000)
-    result = store.report({"success": False, "checks": [{"status": "failed", "exit_code": 9, "stdout": "x" * 100000}]})
+    result = store.report(
+        {"success": False, "checks": [{"status": "failed", "exit_code": 9, "stdout": "x" * 100000}]}
+    )
     assert result["checks"][0]["exit_code"] == 9 and result["checks"][0]["truncated"]
     assert result["events_truncated"]
     assert sum(p.stat().st_size for p in tmp_path.iterdir()) < 65536

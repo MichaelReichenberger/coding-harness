@@ -15,19 +15,25 @@ class FakeService:
         self.report = None
         self.path = None
 
-    def start(self, task, provider):
+    def start(self, task, *, model_name=None):
         self.started += 1
         self.active = True
-        self.task, self.provider = task, provider
+        self.task, self.model_name = task, model_name
 
     def cancel(self):
         self.cancelled = True
 
     def snapshot(self):
-        return {"active": self.active, "events": [], "report": self.report,
-                "error": None, "run_id": "test-ui" if self.started else None,
-                "path": self.path, "actions": 2 if self.started else 0,
-                "state": "running" if self.active else "ready"}
+        return {
+            "active": self.active,
+            "events": [],
+            "report": self.report,
+            "error": None,
+            "run_id": "test-ui" if self.started else None,
+            "path": self.path,
+            "actions": 2 if self.started else 0,
+            "state": "running" if self.active else "ready",
+        }
 
 
 @pytest.fixture
@@ -48,11 +54,11 @@ def button(ui, label):
 def test_start_status_rerun_and_cancellation(ui):
     test, fake = ui
     assert not test.exception
+    test.text_area[0].set_value("Korrigiere einen Preisfehler.").run()
     button(test, "Lauf starten").click().run()
     assert not test.exception
     assert fake.started == 1
-    assert fake.provider == "ollama"
-    assert "TWO_FOR_AMOUNT" in fake.task
+    assert fake.task == "Korrigiere einen Preisfehler."
     assert button(test, "Lauf starten").disabled
     assert not button(test, "Abbrechen").disabled
     test.run()
@@ -65,9 +71,16 @@ def test_result_check_status_and_downloads(ui, tmp_path):
     test, fake = ui
     fake.started = 1
     fake.path = str(tmp_path)
-    fake.report = {"success": False, "state": "blocked", "reason": "Docker fehlt",
-                   "simulated": True, "changed_files": [], "checks": [
-                       {"phase": "final", "check_id": "acceptance", "status": "not_run", "exit_code": None}]}
+    fake.report = {
+        "success": False,
+        "state": "blocked",
+        "reason": "Docker fehlt",
+        "simulated": True,
+        "changed_files": [],
+        "checks": [
+            {"phase": "final", "check_id": "acceptance", "status": "not_run", "exit_code": None}
+        ],
+    }
     (tmp_path / "report.json").write_text(json.dumps(fake.report), "utf-8")
     (tmp_path / "changes.diff").write_text("", "utf-8")
     test.run()
@@ -79,7 +92,33 @@ def test_result_check_status_and_downloads(ui, tmp_path):
 
 def test_diagnosis_can_display_missing_services(ui, monkeypatch):
     test, fake = ui
-    monkeypatch.setattr("harness.doctor.doctor", lambda settings: {"live_ready": False, "sandbox_ready": False, "checks": []})
+    monkeypatch.setattr(
+        "harness.doctor.doctor",
+        lambda settings: {"live_ready": False, "sandbox_ready": False, "checks": []},
+    )
     button(test, "Umgebung prüfen").click().run()
     assert not test.exception
     assert any("Voraussetzungen fehlen" in item.value for item in test.warning)
+
+
+def test_custom_prompt_is_sent_without_demo_task(ui):
+    test, fake = ui
+    assert test.text_area[0].value == ""
+    assert button(test, "Lauf starten").disabled
+    test.text_input[0].set_value("my-installed-model:latest").run()
+    task = "Ändere die Überschrift auf Gesamt: in receipt_printer.py."
+    test.text_area[0].set_value(task).run()
+    button(test, "Lauf starten").click().run()
+    assert not test.exception and fake.task == task
+    assert fake.model_name == "my-installed-model:latest"
+
+
+def test_passed_checks_explain_limited_verification_scope(ui, tmp_path):
+    test, fake = ui
+    fake.report = {"success": True, "state": "passed", "reason": "done", "checks": []}
+    fake.path = str(tmp_path)
+    (tmp_path / "report.json").write_text(json.dumps(fake.report), "utf-8")
+    test.run()
+    assert not test.exception
+    assert test.success[0].value == "Alle konfigurierten Checks bestanden."
+    assert any("nicht automatisch geprüft" in item.value for item in test.info)

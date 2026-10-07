@@ -1,4 +1,10 @@
-"""Streamlit entry point; the controller worker never calls Streamlit APIs."""
+"""Oberfläche: Eingaben und Ergebnisse. Hier wird kein Modellcode ausgeführt.
+
+Streamlit führt das Skript bei Eingaben erneut aus. cache_resource erhält den
+RunService; das Fragment liest regelmäßig den laufenden Worker aus. Dadurch
+startet ein Neuzeichnen keinen zweiten Lauf und Abbrechen bleibt erreichbar.
+"""
+
 from pathlib import Path
 
 import streamlit as st
@@ -17,7 +23,9 @@ def get_service():
 
 def main():
     st.title("Supermarket Coding Harness")
-    st.caption("Stage 1 · Python-Controller · isolierte Linux-Container · nachvollziehbare Prüfungen")
+    st.caption(
+        "Stage 1 · Python-Controller · isolierte Linux-Container · nachvollziehbare Prüfungen"
+    )
     try:
         settings = load_settings()
         service = get_service()
@@ -32,24 +40,33 @@ def main():
         st.caption("Teilprojekt: " + target.subdirectory)
         st.code(target.commit, language=None)
         st.write("Änderungsbereich: " + ", ".join(target.editable))
-        st.write("Provider: Ollama · Modell: " + settings.model)
-        st.caption("Werkzeugprotokoll: " + settings.ollama_protocol)
-        st.caption("Modellwechsel über HARNESS_MODEL vor dem UI-Start; kein automatischer Download.")
+        model_name = st.text_input("Ollama-Modell", value=settings.model, disabled=service.active)
+        st.caption("Name eines installierten Modells; kein automatischer Download.")
         if st.button("Umgebung prüfen", disabled=service.active):
             with st.spinner("Docker, Referenz und Ollama prüfen …"):
-                st.session_state["diagnosis"] = doctor(settings)
+                st.session_state["diagnosis"] = doctor(
+                    settings.model_copy(update={"model": model_name})
+                )
         if "diagnosis" in st.session_state:
             diagnosis = st.session_state["diagnosis"]
             (st.success if diagnosis["live_ready"] else st.warning)(
-                "Echter Lauf startbereit" if diagnosis["live_ready"] else "Externe Voraussetzungen fehlen")
+                "Echter Lauf startbereit"
+                if diagnosis["live_ready"]
+                else "Externe Voraussetzungen fehlen"
+            )
             st.json(diagnosis)
-    task = st.text_area("Coding-Aufgabe", value=target.task, height=130, max_chars=12000,
-                        key="task_supermarket", disabled=service.active)
-    st.caption("Die Vorlage legt die geschützten Akzeptanztests fest. Änderungen am Text ändern diese Tests nicht.")
-    provider = st.selectbox("Modellmodus", ["Echtes Modell (Ollama)", "Simulation (festes Antwortskript)"],
-                            disabled=service.active)
-    if provider.startswith("Simulation"):
-        st.warning("SIMULIERT: vorbereitete Werkzeugantworten für die Paketpreis-Aufgabe. Kein echter Modellnachweis.")
+    task = st.text_area(
+        "Coding-Aufgabe",
+        value="",
+        height=150,
+        max_chars=12000,
+        disabled=service.active,
+        placeholder="Beschreibe den Fehler und das gewünschte Verhalten.",
+    )
+    st.caption(
+        "Alle Läufe prüfen Zweierpaketpreise und bestehende Preisregeln. "
+        "Für andere Anforderungen braucht es passende geschützte Tests. Siehe docs/task.md."
+    )
 
     @st.fragment(run_every=0.5)
     def monitor():
@@ -59,23 +76,35 @@ def main():
         if was_active and not snapshot["active"]:
             st.rerun()
         left, right = st.columns(2)
-        if left.button("Lauf starten", type="primary", disabled=snapshot["active"] or not task.strip()):
+        if left.button(
+            "Lauf starten", type="primary", disabled=snapshot["active"] or not task.strip()
+        ):
             try:
-                service.start(task, "scripted" if provider.startswith("Simulation") else "ollama")
+                service.start(task, model_name=model_name)
                 st.rerun()
             except Exception as exc:
                 st.error(str(exc))
         if right.button("Abbrechen", disabled=not snapshot["active"]):
             service.cancel()
-            st.warning("Abbruch angefordert. Der Controller beendet die Sandbox und erhält den Bericht.")
-        st.write(f"Zustand: **{snapshot['state']}** · Aktionen: {snapshot['actions']} / {settings.limits.actions}")
+            st.warning(
+                "Abbruch angefordert. Der Controller beendet die Sandbox und erhält den Bericht."
+            )
+        st.write(
+            f"Zustand: **{snapshot['state']}** · Aktionen: {snapshot['actions']} / {settings.limits.actions}"
+        )
         if snapshot["run_id"]:
             st.caption("Lauf-ID: " + snapshot["run_id"])
         report = snapshot["report"]
         if report:
             if report.get("simulated"):
                 st.warning("Dieser Lauf ist eine Simulation.")
-            (st.success if report["success"] else st.warning)(f"{report['state']}: {report['reason']}")
+            if report["success"]:
+                st.success("Alle konfigurierten Checks bestanden.")
+                st.info(
+                    "Das belegt die geprüften Geschäftsregeln. Weitere Anforderungen deines Prompts sind nicht automatisch geprüft."
+                )
+            else:
+                st.warning(f"{report['state']}: {report['reason']}")
         history, changes, checks = st.tabs(["Verlauf", "Dateien & Diff", "Checks"])
         with history:
             for event in snapshot["events"]:
@@ -90,24 +119,58 @@ def main():
                 if report.get("diff_truncated"):
                     st.warning("Diff wegen Artefaktlimit gekürzt.")
                 st.code(diff or "Keine Änderungen", language="diff")
-                st.download_button("Diff herunterladen", diff, file_name="changes.diff", mime="text/plain")
-                st.download_button("Laufbericht herunterladen", (Path(snapshot["path"]) / "report.json").read_bytes(),
-                                   file_name="report.json", mime="application/json")
+                st.download_button(
+                    "Diff herunterladen", diff, file_name="changes.diff", mime="text/plain"
+                )
+                st.download_button(
+                    "Laufbericht herunterladen",
+                    (Path(snapshot["path"]) / "report.json").read_bytes(),
+                    file_name="report.json",
+                    mime="application/json",
+                )
             else:
                 st.info("Der vollständige Diff steht nach Laufende bereit, auch nach Abbruch.")
         with checks:
-            records = report.get("checks", []) if report else [e for e in snapshot["events"] if e["kind"] == "check"]
+            records = (
+                report.get("checks", [])
+                if report
+                else [e for e in snapshot["events"] if e["kind"] == "check"]
+            )
             if records:
-                st.dataframe([{k: r.get(k) for k in ("phase", "check_id", "status", "exit_code", "timed_out", "cancelled", "cleanup_verified")}
-                              for r in records], hide_index=True, width="stretch")
+                st.dataframe(
+                    [
+                        {
+                            k: r.get(k)
+                            for k in (
+                                "phase",
+                                "check_id",
+                                "status",
+                                "exit_code",
+                                "timed_out",
+                                "cancelled",
+                                "cleanup_verified",
+                            )
+                        }
+                        for r in records
+                    ],
+                    hide_index=True,
+                    width="stretch",
+                )
                 for index, check in enumerate(records):
-                    with st.expander(f"{index+1}. {check['phase']} · {check['check_id']} · {check['status']}"):
+                    with st.expander(
+                        f"{index + 1}. {check['phase']} · {check['check_id']} · {check['status']}"
+                    ):
                         st.code(" ".join(check.get("command", [])), language=None)
                         if check.get("truncated"):
                             st.warning("Ausgabe gekürzt; Status und Exit-Code bleiben erhalten.")
-                        st.code(check.get("stdout", "") + "\n" + check.get("stderr", ""), language=None)
+                        st.code(
+                            check.get("stdout", "") + "\n" + check.get("stderr", ""), language=None
+                        )
                         st.write(check.get("reason", ""))
-            st.caption("passed = bestanden · failed = fehlgeschlagen · unavailable = nicht verfügbar · not_run = nicht ausgeführt")
+            st.caption(
+                "passed = bestanden · failed = fehlgeschlagen · unavailable = nicht verfügbar · not_run = nicht ausgeführt"
+            )
+
     monitor()
 
 

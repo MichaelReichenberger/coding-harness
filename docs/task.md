@@ -1,67 +1,70 @@
-# Fixierte OpenStock-Aufgabe
+# Zielrepository und geschützte Akzeptanz
 
-- Quelle: https://github.com/TMBeaver/openstock
-- Tatsächlich geklonter Commit: `abc87dccab96c78917b35add542284e61adc5f37`
-- Versionierte Konfiguration: `config/target.json`
-- Erlaubte Änderungen: bestehende `operations.py`, bei Bedarf `app.py`.
-- Außerhalb des Scopes: Berechtigungen, Datenbankschema, andere Geschäftsregeln, Tests und Konfiguration.
+- URL: https://github.com/emilybache/SupermarketReceipt-Refactoring-Kata
+- Ausgangs-Commit: `c72d68abd77a417f84193b72a3b8d14177336066`.
+- Teilprojekt: `python/`, direkt aus dem Commit; kein künstlich eingefügter Bug.
+- Änderbare Dateien: die sechs Anwendungsdateien in `config/target.json`.
+- Tests und Konfiguration sind geschützt. Keine Dateien anlegen oder löschen.
 
-## Fachliche Anforderung
+## Kleine Aufgabe: Stückzahlen auf dem Kassenbeleg
 
-Lagertransfers müssen Mengen ≤ 0 mit verständlichem HTTP 400 ablehnen. Eine ungültige
-Position macht den gesamten Transfer ungültig: keine Bestandsänderung, kein Dokument,
-keine Dokumentzeile. Positive Transfers funktionieren weiterhin.
+Die Kasse (`Teller`) verarbeitet einen `ShoppingCart` und erzeugt einen `Receipt`.
+`ReceiptPrinter` druckt diesen Beleg. Stückzahlen werden im Warenkorb auch als Float
+übergeben. Der vorhandene Drucker zeigt deshalb beispielsweise `3.0` an. Fachlich
+sollen Stückzahlen ohne Nachkommastellen erscheinen; Gewichte behalten drei Stellen.
+Die Rechnung und Rabattregeln sollen unverändert bleiben.
 
-| Fall | Erwartung |
-|---|---|
-| Menge −1 | HTTP 400, Mengenfehler; alle Bestände/Dokumente/Zeilen unverändert |
-| Menge 0 | HTTP 400, Mengenfehler; keine Buchung |
-| Menge +2 | HTTP 200, Bestand 4000→3998 und 500→502, ein Dokument/eine Zeile |
-| Erst +2, dann −1 | HTTP 400; vollständiger Rollback |
-| Erst +2, dann 0 | HTTP 400; vollständiger Rollback |
+Der echte Modellversuch verwendet folgenden Prompt ohne Reparaturhinweis:
 
-Die Prüfung durchläuft echten Login (`/api/operator/login`), Sessionheader und
-`/api/transfer` über Flask `test_client`, dann `Operations.transfer` und echte SQLite-Tabellen.
-`app.py` prüft Berechtigungen und übersetzt `OperationError` in HTTP 400.
-`operations.py` führt die Transaktion aus; `db.py` verwaltet Verbindung, Schema und Daten.
-Das sind mehrere zusammenarbeitende Module mit realen Bestands- und Transaktionsregeln.
+> There is a bug in receipt printing: quantities for EACH products have decimal
+> places, but must be displayed as whole numbers. KILO quantities must keep three
+> decimal places. Change only the printing behavior, not the stored data or pricing.
+> First use read_file to inspect the printing code. Then fix the formatting and run
+> acceptance, regression_core and regression_pricing before finishing.
 
-Am Ausgangs-Commit gibt es nur die Bestandsobergrenze in `_transfer`, keine positive
-Mengenprüfung. Die Docker-Baseline bestätigt für alle vier ungültigen Fälle HTTP 200
-und ein neues Transferdokument. Bei −1 steigt der Quellbestand sogar auf 4001.
-Die positive Kontrolle besteht. Dies ist kein Authentifizierungs- oder Fixturefehler.
-Ein Ersatzkandidat war deshalb nicht nötig.
+Das ist eine Verhaltensanforderung, keine Codekorrektur. Die UI beginnt weiterhin
+leer. Der Harness setzt keinen Prompt und keinen Quellcodeausschnitt automatisch ein.
+Das Modell muss Dateien selbst untersuchen; der tatsächlich gesendete Prompt steht im Bericht.
 
-## Reproduzierbare Daten und geschützte Regression
+## Vorab festgelegte geschützte Akzeptanz
 
-Jeder Check läuft in einem neuen Container mit frischem tmpfs. Das unveränderte
-`seed_demo.py` erzeugt 14 synthetische Produkte, sechs Firmen und einen Testbenutzer.
-Der öffentliche Testwert `synthetic-test-only` ist ausschließlich ein Wegwerfpasswort.
-Vor jedem Akzeptanzfall stellt eine SQLite-Backupkopie denselben Ausgangsdatenbestand her.
-Session-IDs werden nicht protokolliert. Es werden keine echten Geschäftsdaten gelesen.
+`checks/acceptance.py` prüft den kompletten Kassiervorgang und den gedruckten Beleg:
 
-Die festen Regressionen sind `tests/test_core.py` (**23 Einzelprüfungen**) und
-`tests/test_reversal_advances.py` (**22 Einzelprüfungen**) aus dem fixierten Repository.
-Ihre Kopien in `checks/upstream/` sind dem Agenten nicht zugänglich. Herkunft und SHA-256
-stehen in `provenance.json`; die Upstream-Lizenz liegt daneben.
+| Fall | Einheit | Menge | Erwartete Mengenzeile |
+|---|---|---:|---|
+| leer | EACH | 0.0 | keine |
+| einzelner Artikel | EACH | 1.0 | keine zusätzliche Zeile |
+| Gewicht | KILO | 1.5 | `1.25 * 1.500` |
+| zwei Artikel | EACH | 2.0 | `1.25 * 2` |
+| drei Artikel | EACH | 3.0 | `1.25 * 3` |
+| fünf Artikel | EACH | 5.0 | `1.25 * 5` |
 
-Diese Skripte berechnen Quell-/Datenpfade aus `__file__`. Der dokumentierte Adapter
-`checks/entry.py` kompiliert die unveränderten Skriptbytes mit deren ursprünglichem
-`/repo/tests/...`-Dateinamen und setzt `__file__` entsprechend. So importieren sie die
-Agenten-Arbeitskopie und verwenden `/repo/data`, während ihre Assertions aus dem
-geschützten Mount stammen. Vorher wird die leere Datenbank mit dem Upstream-Seed gefüllt.
-Derselbe Adapter und dieselben Testdateien werden vor und nach Änderungen verwendet.
+Der Einzelpreis beträgt jeweils 1,25. Die ersten drei Fälle sind Positivkontrollen.
+Im Ausgangscommit scheitern ausschließlich die drei Stückmengenfälle. Der Test prüft
+zusätzlich den unveränderten Gesamtpreis und eine vorhandene Gesamtzeile.
+`baseline_bug_reproduced` dokumentiert diesen fachlichen Fehler, statt einen
+Infrastrukturfehler als rote Baseline zu zählen. Es steuert keine Modellaktionen.
 
-Zusätzliche Upstream-HTTP-Smokes sind nicht als Pflichtregression ausgewählt: sie erwarten
-einen eigenständigen laufenden Server und teils alte Authentifizierungs-/Datenannahmen.
-Sie werden weder geändert noch als bestanden dargestellt. Der neue Akzeptanztest deckt
-den authentifizierten HTTP-Transferpfad ab. `python tests/test_core.py` ohne Seed wäre
-kein aussagekräftiger Baseline-Lauf.
+`regression_core` führt den unveränderten Upstream-unittest aus; Originalbytes,
+Herkunft und Lizenz stehen in `checks/upstream/`. `regression_pricing` schützt
+Normal-/Gewichtspreise, Prozentangebote, „3 für 2“ und „5 zum Paketpreis“.
+Baseline und Endprüfung verwenden dieselben Checks und geschützten Dateihashes.
 
-## Integrität und Bewertung
+## Abgrenzung zur vorherigen Aufgabe
 
-Der Runner speichert Prüffile-Hashes und prüft sie vor/nach jedem Check; die festen
-Checkbefehle erhalten einen eigenen Hash im Bericht. Akzeptanz- und Regressionstests
-werden niemals direkt in den Host-Prozess importiert. Ein Lauf gilt nur mit fachlich
-reproduzierter Baseline und sämtlichen tatsächlich bestandenen Endprüfungen als erfolgreich.
-Ein erfolgreicher Simulationslauf bleibt ausdrücklich als simuliert gekennzeichnet.
+Seit dem 07.10.2026 ist der Belegdruck die ausgewählte kleine POC-Aufgabe. Die frühere
+Akzeptanz der ungeraden Zweierpaketpreise wurde dafür ausdrücklich ersetzt. Der
+bekannte Paarpreisfehler ist weiterhin im Ausgangscommit vorhanden und wurde nicht
+repariert. Ein grüner Belegdruck-Lauf behauptet keine Fehlerfreiheit des ganzen Repos.
+Historische Laufberichte und Diffs dokumentieren die vorherigen Prüfungen unverändert.
+
+## Eigene Aufgaben des Professors
+
+Eigene Prompts werden direkt im leeren Aufgabenfeld eingegeben. Für eine andere
+fachliche Anforderung muss der Prüfer zuvor `checks/acceptance.py` anpassen und mit
+`python -m harness baseline` den Fehler und funktionierende Kontrollen nachweisen.
+Auch die erwarteten Fallnamen in `baseline_reproduces()` (`harness/verifier.py`)
+müssen dann zur Aufgabe passen. Zielmodule werden ausschließlich in Docker importiert.
+Die neue Aufgabe läuft mit demselben Harness, denselben Werkzeugen und Limits.
+Geschützte Tests bleiben vom Modell unveränderbar. Grüne bestehende Tests allein
+beweisen keine beliebige andere Anforderung.
