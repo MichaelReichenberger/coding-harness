@@ -13,7 +13,7 @@ Diese README enthält Einrichtung, Bedienung, Klassen, Architektur und Diagramme
 
 ### Auf einem anderen Windows-PC
 
-1. Installiere [Python ab 3.12](https://www.python.org/downloads/windows/) mit
+1. Installiere [Python 3.12](https://www.python.org/downloads/windows/) mit
    Python-Launcher und PATH-Eintrag sowie [Git](https://git-scm.com/download/win).
    Python führt den Harness aus; Git lädt das Projekt und den fixierten Zielcommit.
 2. Installiere und starte [Docker Desktop](https://www.docker.com/products/docker-desktop/).
