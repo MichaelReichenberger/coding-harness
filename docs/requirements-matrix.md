@@ -1,16 +1,17 @@
 # Abgleich mit der Stage-1-PDF
 
 Alle vier Seiten wurden erneut gelesen. Die PDF ist maßgeblich. Stand: 07.10.2026.
-**Die aktuelle Version ist offline und mit fünf echten Docker-Tests geprüft. Die neue kleine
-Aufgabe prüft Stückzahlen im Belegdruck; echte 3B-Versuche sind separat dokumentiert. Ein erfolgreicher
-echter Bugfix und die vollständige Abgabe bleiben offen.**
+**Prüfung nach Bereinigung abgeschlossen: 59 Offline-Tests, fünf echte Docker-Tests,
+Ruff und ein erfolgreicher echter 7B-Bugfix mit roter Baseline und grüner Endprüfung.
+Nachweise: [Verifikation](verification.md), [echter Lauf](evidence/report.json).
+Veröffentlichung der aktuellen Ergänzungen und Videoaufnahme bleiben offen.**
 
 | PDF-Anforderung | Implementierung / Prüfung | Aktueller Stand |
 |---|---|---|
 | S.1 eigenes Python-Harness | eigenes `harness/`, kein fertiges Agentenprodukt | implementiert |
 | S.1–2 Eingabe, Fortschritt, Dateien, Diff, Checks | freie CLI-/UI-Eingabe, Worker, AppTest | offline geprüft |
-| S.2 Setup, Dependencies, Beispielsettings | README, Lockdatei, TOML, `setup`, `doctor` | vorhanden; frischer Gesamtaufbau nach Bereinigung noch offen |
-| S.2 klare Verantwortlichkeiten | kommentierte Module, Lernleitfaden und Diagramme | vorhanden |
+| S.2 Setup, Dependencies, Beispielsettings | README, Lockdatei, TOML, `setup`, `doctor` | frisch installiert; setup --build und doctor bestanden |
+| S.2 klare Verantwortlichkeiten | kommentierte Module, Klassenübersicht und Diagramme in der README | vorhanden |
 | S.2 Controller: Kontext, Validierung, Aktion, Beobachtung | Controller + Registry + Ollama-JSON | Scripted-/HTTP-Tests bestanden |
 | S.2 List/Read/Search/Edit im erlaubten Scope | RepositoryTools | Dateitests bestanden |
 | S.2 enthaltene Commands/Tests, Output/Exit-Code | DockerRunner + feste Check-IDs | 5 echte Docker-Tests bestanden |
@@ -31,21 +32,16 @@ echter Bugfix und die vollständige Abgabe bleiben offen.**
 | S.4 öffentliches lokales Pythonrepo, Tests, Module/Geschäftsregeln | Supermarket Receipt: Teller → Cart → Receipt; `docs/task.md` | erfüllt |
 | S.4 Repo/Commit/Task/Scope dokumentieren | Target-Konfiguration, frei eingegebener Prompt im Bericht, Task-Dokument | implementiert |
 | S.4 vorbereitete geschützte Akzeptanz | unveränderte Prüffiles außerhalb Kopie, read-only, Hashvergleich | rote Baseline am 07.10.2026 erneut nachgewiesen |
-| S.4 echter Modelllauf, Diff, grüne Akzeptanz/Regressionen, Hilfe offenlegen | Belegdruck-Aufgabe mit 3B und geschützter Akzeptanz; aktueller Befund in `docs/verification.md`, erfolgreicher Modellnachweis noch offen | **für aktuelle Version offen** |
-| S.4 Quellcode per Repositorylink | lokal vorhanden | **Veröffentlichung offen** |
+| S.4 echter Modelllauf, Diff, grüne Akzeptanz/Regressionen, Hilfe offenlegen | abschließender echter 7B-Lauf in `docs/evidence/report.json`, Modelldiff, alle Endchecks grün, Hilfe offengelegt | **nachgewiesen** |
+| S.4 Quellcode per Repositorylink | öffentlicher Repositorylink erreichbar; aktuelle Laufnachweise lokal | **aktuelle Ergänzungen noch veröffentlichen** |
 | S.4 Secrets falls nötig | lokales Ollama benötigt keine | nicht nötig |
-| S.4 README und passende Diagramme | aktualisierte README/Architektur/Lernleitfaden | vorhanden |
+| S.4 README und passende Diagramme | README mit Einrichtung, Klassen und Architekturdiagrammen | vorhanden |
 | S.4 Video höchstens vier Minuten | Drehbuch vorhanden | **Aufnahme offen** |
 
-## Auflösung des Anforderungskonflikts
+## Nachweis und verbleibende Abgabe
 
-Entfernt: Lösung im Prompt, gezielter Startausschnitt, Reparaturskript als Laufmodus und
-Demo/Frei-Sonderbehandlungen. Eigene Eingaben und ein stärkeres Modell sind möglich.
-
-Erhalten: fixierter Commit, erlaubte Dateien, geschützte Akzeptanz, feste Checkbefehle,
-Limits und deterministische Testantworten. Diese sind von der PDF gefordert oder bilden
-die ausführbare Berechtigungsgrenze. Sie garantieren keinen echten Modellerfolg.
-
-Ein echter erfolgreicher Bugfix-Nachweis bleibt laut PDF erforderlich, auch wenn der
-Lernschwerpunkt beim Harness liegt. Ein korrekter Limit-Abbruch demonstriert die Grenzen,
-ersetzt aber nicht den auf S.4 geforderten erfolgreichen Modellnachweis.
+Verbindliche Rechte, geschützte Checks, Limits und deterministische Testantworten
+bleiben erhalten. Der Scripted-Bugfix ist nur eine Testfixture und ersetzt keinen
+echten Modelllauf. Die aktuellen Prüfergebnisse und die manuelle Hilfe stehen in
+[Verifikation](verification.md). Für die vollständige Abgabe bleiben Veröffentlichung
+des aktuellen Quellstands und das Demo-Video erforderlich.

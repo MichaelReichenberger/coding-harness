@@ -14,17 +14,11 @@ Die Kasse (`Teller`) verarbeitet einen `ShoppingCart` und erzeugt einen `Receipt
 sollen Stückzahlen ohne Nachkommastellen erscheinen; Gewichte behalten drei Stellen.
 Die Rechnung und Rabattregeln sollen unverändert bleiben.
 
-Der echte Modellversuch verwendet folgenden Prompt ohne Reparaturhinweis:
-
-> There is a bug in receipt printing: quantities for EACH products have decimal
-> places, but must be displayed as whole numbers. KILO quantities must keep three
-> decimal places. Change only the printing behavior, not the stored data or pricing.
-> First use read_file to inspect the printing code. Then fix the formatting and run
-> acceptance, regression_core and regression_pricing before finishing.
-
-Das ist eine Verhaltensanforderung, keine Codekorrektur. Die UI beginnt weiterhin
-leer. Der Harness setzt keinen Prompt und keinen Quellcodeausschnitt automatisch ein.
-Das Modell muss Dateien selbst untersuchen; der tatsächlich gesendete Prompt steht im Bericht.
+Der vollständige, tatsächlich geprüfte Nutzerprompt steht im
+[Beispielprompt der README](../README.md#beispielprompt) und im Feld `task` des
+[aktuellen echten Modellberichts](evidence/report.json). Es handelt sich um eine
+Verhaltensanforderung mit Dateihinweis, ohne Quellcodekorrektur. Die UI beginnt leer;
+das Modell muss Dateien selbst untersuchen.
 
 ## Vorab festgelegte geschützte Akzeptanz
 
@@ -49,14 +43,6 @@ Infrastrukturfehler als rote Baseline zu zählen. Es steuert keine Modellaktione
 Herkunft und Lizenz stehen in `checks/upstream/`. `regression_pricing` schützt
 Normal-/Gewichtspreise, Prozentangebote, „3 für 2“ und „5 zum Paketpreis“.
 Baseline und Endprüfung verwenden dieselben Checks und geschützten Dateihashes.
-
-## Abgrenzung zur vorherigen Aufgabe
-
-Seit dem 07.10.2026 ist der Belegdruck die ausgewählte kleine POC-Aufgabe. Die frühere
-Akzeptanz der ungeraden Zweierpaketpreise wurde dafür ausdrücklich ersetzt. Der
-bekannte Paarpreisfehler ist weiterhin im Ausgangscommit vorhanden und wurde nicht
-repariert. Ein grüner Belegdruck-Lauf behauptet keine Fehlerfreiheit des ganzen Repos.
-Historische Laufberichte und Diffs dokumentieren die vorherigen Prüfungen unverändert.
 
 ## Eigene Aufgaben des Professors
 

@@ -64,7 +64,7 @@ def main():
         placeholder="Beschreibe den Fehler und das gewünschte Verhalten.",
     )
     st.caption(
-        "Alle Läufe prüfen Zweierpaketpreise und bestehende Preisregeln. "
+        "Alle Läufe prüfen Stückmengen im Belegdruck und bestehende Preisregeln. "
         "Für andere Anforderungen braucht es passende geschützte Tests. Siehe docs/task.md."
     )
 

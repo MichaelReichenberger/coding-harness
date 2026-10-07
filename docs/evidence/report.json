@@ -1,0 +1,268 @@
+{
+  "run_id": "20261007T171054Z-a4859127",
+  "started_at": "2026-10-07T17:10:54.159737+00:00",
+  "finished_at": "2026-10-07T17:11:24.168939+00:00",
+  "state": "passed",
+  "reason": "Fixed receipt quantity display for products sold by EACH. All checks passed.",
+  "success": true,
+  "simulated": false,
+  "editable": [
+    "shopping_cart.py",
+    "teller.py",
+    "receipt.py",
+    "receipt_printer.py",
+    "model_objects.py",
+    "catalog.py"
+  ],
+  "verification_scope": "Konfigurierte Akzeptanz- und Regressionstests; keine allgemeine Prompt-Bewertung",
+  "baseline_bug_reproduced": true,
+  "provider": "ollama",
+  "model": "qwen2.5-coder:7b",
+  "model_protocol": "json_schema",
+  "target": {
+    "name": "Supermarket Receipt",
+    "url": "https://github.com/emilybache/SupermarketReceipt-Refactoring-Kata",
+    "subdirectory": "python",
+    "commit": "c72d68abd77a417f84193b72a3b8d14177336066",
+    "editable": [
+      "shopping_cart.py",
+      "teller.py",
+      "receipt.py",
+      "receipt_printer.py",
+      "model_objects.py",
+      "catalog.py"
+    ]
+  },
+  "task": "Fix the receipt quantity display for products sold by EACH. A quantity of 3.0 must appear as 3 on the printed receipt; 2.0 as 2; 5.0 as 5. Quantities of KILO products must still appear with three decimal places, for example 1.500. All monetary prices must still have two decimal places, for example 1.25. Keep stored quantities and pricing unchanged. First read the entire receipt_printer.py. Distinguish the quantity formatter from the price formatter, and change only the EACH quantity formatting. Use the exact source text you read for replace_text. Then run acceptance, regression_core and regression_pricing. If all pass, finish; if a check fails, reread the code before another edit.",
+  "limits": {
+    "actions": 40,
+    "rounds": 50,
+    "retries": 2,
+    "check_seconds": 120,
+    "model_seconds": 180,
+    "output_bytes": 65536,
+    "file_bytes": 262144,
+    "context_bytes": 196608,
+    "artifact_bytes": 8388608
+  },
+  "environment": {
+    "platform": "linux",
+    "image_id": "sha256:3465d23bec6185b680172d5c3bf6d660b6efb533f6df1f0294d415d92ff6a885"
+  },
+  "actions": 6,
+  "rounds": 6,
+  "requests": 6,
+  "retries": 0,
+  "denials": 0,
+  "changed_files": [
+    "receipt_printer.py"
+  ],
+  "diff_truncated": false,
+  "checks": [
+    {
+      "phase": "baseline",
+      "check_id": "acceptance",
+      "status": "failed",
+      "command": [
+        "python",
+        "-I",
+        "/trusted/entry.py",
+        "acceptance"
+      ],
+      "exit_code": 1,
+      "stdout": "PASS empty: expected=[]; actual=[]\nPASS single: expected=[]; actual=[]\nPASS weight: expected=['1.25 * 1.500']; actual=['1.25 * 1.500']\nFAIL each_2: expected=['1.25 * 2']; actual=['1.25 * 2.0']\nFAIL each_3: expected=['1.25 * 3']; actual=['1.25 * 3.0']\nFAIL each_5: expected=['1.25 * 5']; actual=['1.25 * 5.0']\nHARNESS_ACCEPTANCE={\"positive_control\": true, \"business_failures\": [\"each_2\", \"each_3\", \"each_5\"], \"infrastructure_errors\": [], \"cases\": {\"empty\": {\"passed\": true, \"expected\": [], \"actual\": []}, \"single\": {\"passed\": true, \"expected\": [], \"actual\": []}, \"weight\": {\"passed\": true, \"expected\": [\"1.25 * 1.500\"], \"actual\": [\"1.25 * 1.500\"]}, \"each_2\": {\"passed\": false, \"expected\": [\"1.25 * 2\"], \"actual\": [\"1.25 * 2.0\"]}, \"each_3\": {\"passed\": false, \"expected\": [\"1.25 * 3\"], \"actual\": [\"1.25 * 3.0\"]}, \"each_5\": {\"passed\": false, \"expected\": [\"1.25 * 5\"], \"actual\": [\"1.25 * 5.0\"]}}}\n",
+      "stderr": "",
+      "truncated": false,
+      "timed_out": false,
+      "cancelled": false,
+      "seconds": 1.96,
+      "reason": "",
+      "container": "harness-20261007t171054z-a4859127-8a203ee1",
+      "cleanup_verified": true
+    },
+    {
+      "phase": "baseline",
+      "check_id": "regression_core",
+      "status": "passed",
+      "command": [
+        "python",
+        "-I",
+        "/trusted/entry.py",
+        "regression_core"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "test_ten_percent_discount (tests.test_supermarket.SupermarketTest.test_ten_percent_discount) ... ok\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK\n",
+      "truncated": false,
+      "timed_out": false,
+      "cancelled": false,
+      "seconds": 1.928,
+      "reason": "",
+      "container": "harness-20261007t171054z-a4859127-5349babc",
+      "cleanup_verified": true
+    },
+    {
+      "phase": "baseline",
+      "check_id": "regression_pricing",
+      "status": "passed",
+      "command": [
+        "python",
+        "-I",
+        "/trusted/entry.py",
+        "regression_pricing"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "test_five_for_amount (pricing_regression.PricingRegression.test_five_for_amount) ... ok\ntest_no_offer (pricing_regression.PricingRegression.test_no_offer) ... ok\ntest_percentage_discount (pricing_regression.PricingRegression.test_percentage_discount) ... ok\ntest_three_for_two (pricing_regression.PricingRegression.test_three_for_two) ... ok\ntest_weighted_product (pricing_regression.PricingRegression.test_weighted_product) ... ok\n\n----------------------------------------------------------------------\nRan 5 tests in 0.000s\n\nOK\n",
+      "truncated": false,
+      "timed_out": false,
+      "cancelled": false,
+      "seconds": 1.911,
+      "reason": "",
+      "container": "harness-20261007t171054z-a4859127-77b7b7fc",
+      "cleanup_verified": true
+    },
+    {
+      "phase": "agent",
+      "check_id": "acceptance",
+      "status": "passed",
+      "command": [
+        "python",
+        "-I",
+        "/trusted/entry.py",
+        "acceptance"
+      ],
+      "exit_code": 0,
+      "stdout": "PASS empty: expected=[]; actual=[]\nPASS single: expected=[]; actual=[]\nPASS weight: expected=['1.25 * 1.500']; actual=['1.25 * 1.500']\nPASS each_2: expected=['1.25 * 2']; actual=['1.25 * 2']\nPASS each_3: expected=['1.25 * 3']; actual=['1.25 * 3']\nPASS each_5: expected=['1.25 * 5']; actual=['1.25 * 5']\nHARNESS_ACCEPTANCE={\"positive_control\": true, \"business_failures\": [], \"infrastructure_errors\": [], \"cases\": {\"empty\": {\"passed\": true, \"expected\": [], \"actual\": []}, \"single\": {\"passed\": true, \"expected\": [], \"actual\": []}, \"weight\": {\"passed\": true, \"expected\": [\"1.25 * 1.500\"], \"actual\": [\"1.25 * 1.500\"]}, \"each_2\": {\"passed\": true, \"expected\": [\"1.25 * 2\"], \"actual\": [\"1.25 * 2\"]}, \"each_3\": {\"passed\": true, \"expected\": [\"1.25 * 3\"], \"actual\": [\"1.25 * 3\"]}, \"each_5\": {\"passed\": true, \"expected\": [\"1.25 * 5\"], \"actual\": [\"1.25 * 5\"]}}}\n",
+      "stderr": "",
+      "truncated": false,
+      "timed_out": false,
+      "cancelled": false,
+      "seconds": 2.156,
+      "reason": "",
+      "container": "harness-20261007t171054z-a4859127-57c6f68c",
+      "cleanup_verified": true
+    },
+    {
+      "phase": "agent",
+      "check_id": "regression_core",
+      "status": "passed",
+      "command": [
+        "python",
+        "-I",
+        "/trusted/entry.py",
+        "regression_core"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "test_ten_percent_discount (tests.test_supermarket.SupermarketTest.test_ten_percent_discount) ... ok\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK\n",
+      "truncated": false,
+      "timed_out": false,
+      "cancelled": false,
+      "seconds": 2.039,
+      "reason": "",
+      "container": "harness-20261007t171054z-a4859127-d0971a66",
+      "cleanup_verified": true
+    },
+    {
+      "phase": "agent",
+      "check_id": "regression_pricing",
+      "status": "passed",
+      "command": [
+        "python",
+        "-I",
+        "/trusted/entry.py",
+        "regression_pricing"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "test_five_for_amount (pricing_regression.PricingRegression.test_five_for_amount) ... ok\ntest_no_offer (pricing_regression.PricingRegression.test_no_offer) ... ok\ntest_percentage_discount (pricing_regression.PricingRegression.test_percentage_discount) ... ok\ntest_three_for_two (pricing_regression.PricingRegression.test_three_for_two) ... ok\ntest_weighted_product (pricing_regression.PricingRegression.test_weighted_product) ... ok\n\n----------------------------------------------------------------------\nRan 5 tests in 0.000s\n\nOK\n",
+      "truncated": false,
+      "timed_out": false,
+      "cancelled": false,
+      "seconds": 2.08,
+      "reason": "",
+      "container": "harness-20261007t171054z-a4859127-ac788349",
+      "cleanup_verified": true
+    },
+    {
+      "phase": "final",
+      "check_id": "acceptance",
+      "status": "passed",
+      "command": [
+        "python",
+        "-I",
+        "/trusted/entry.py",
+        "acceptance"
+      ],
+      "exit_code": 0,
+      "stdout": "PASS empty: expected=[]; actual=[]\nPASS single: expected=[]; actual=[]\nPASS weight: expected=['1.25 * 1.500']; actual=['1.25 * 1.500']\nPASS each_2: expected=['1.25 * 2']; actual=['1.25 * 2']\nPASS each_3: expected=['1.25 * 3']; actual=['1.25 * 3']\nPASS each_5: expected=['1.25 * 5']; actual=['1.25 * 5']\nHARNESS_ACCEPTANCE={\"positive_control\": true, \"business_failures\": [], \"infrastructure_errors\": [], \"cases\": {\"empty\": {\"passed\": true, \"expected\": [], \"actual\": []}, \"single\": {\"passed\": true, \"expected\": [], \"actual\": []}, \"weight\": {\"passed\": true, \"expected\": [\"1.25 * 1.500\"], \"actual\": [\"1.25 * 1.500\"]}, \"each_2\": {\"passed\": true, \"expected\": [\"1.25 * 2\"], \"actual\": [\"1.25 * 2\"]}, \"each_3\": {\"passed\": true, \"expected\": [\"1.25 * 3\"], \"actual\": [\"1.25 * 3\"]}, \"each_5\": {\"passed\": true, \"expected\": [\"1.25 * 5\"], \"actual\": [\"1.25 * 5\"]}}}\n",
+      "stderr": "",
+      "truncated": false,
+      "timed_out": false,
+      "cancelled": false,
+      "seconds": 1.97,
+      "reason": "",
+      "container": "harness-20261007t171054z-a4859127-fe07d97b",
+      "cleanup_verified": true
+    },
+    {
+      "phase": "final",
+      "check_id": "regression_core",
+      "status": "passed",
+      "command": [
+        "python",
+        "-I",
+        "/trusted/entry.py",
+        "regression_core"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "test_ten_percent_discount (tests.test_supermarket.SupermarketTest.test_ten_percent_discount) ... ok\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK\n",
+      "truncated": false,
+      "timed_out": false,
+      "cancelled": false,
+      "seconds": 2.036,
+      "reason": "",
+      "container": "harness-20261007t171054z-a4859127-5dcb2e40",
+      "cleanup_verified": true
+    },
+    {
+      "phase": "final",
+      "check_id": "regression_pricing",
+      "status": "passed",
+      "command": [
+        "python",
+        "-I",
+        "/trusted/entry.py",
+        "regression_pricing"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "test_five_for_amount (pricing_regression.PricingRegression.test_five_for_amount) ... ok\ntest_no_offer (pricing_regression.PricingRegression.test_no_offer) ... ok\ntest_percentage_discount (pricing_regression.PricingRegression.test_percentage_discount) ... ok\ntest_three_for_two (pricing_regression.PricingRegression.test_three_for_two) ... ok\ntest_weighted_product (pricing_regression.PricingRegression.test_weighted_product) ... ok\n\n----------------------------------------------------------------------\nRan 5 tests in 0.000s\n\nOK\n",
+      "truncated": false,
+      "timed_out": false,
+      "cancelled": false,
+      "seconds": 1.959,
+      "reason": "",
+      "container": "harness-20261007t171054z-a4859127-a0abd8dc",
+      "cleanup_verified": true
+    }
+  ],
+  "trusted_hashes": {
+    "acceptance.py": "083ed02e5b4252796a6dca70c9989b3dc90e80c90d58f94016ab7a8320c3a126",
+    "entry.py": "b6ba41379740b1bb7857dd410739c3c0a37566369c81c77873db20f6dbbafd1b",
+    "pricing_regression.py": "da4398d17b0a525a0d54dc6298b561581725f443a771492e6042ba1545b8d3ec",
+    "scenario.py": "34ffc58a43c95f17e6208021ef321a10775fda955f642cf8cb3f2f652bba9b9f",
+    "upstream/LICENSE": "d148169eb360b8bb8566309a25a4126dd26d0a41258799756a7c5317b3536544",
+    "upstream/provenance.json": "7fd8b6a636bd1aa9b651fedf6e44691da69042f795e20b0ea9759c8ee5055377",
+    "upstream/tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "upstream/tests/fake_catalog.py": "4904b132bc430d753befbfc3a7f7f586d944113158dbf6f29157afc43930fc14",
+    "upstream/tests/test_supermarket.py": "d90e936e30a9560a10e84e8d5eb55d220d26a260bf86ebd02ec5827bad2a13e1"
+  },
+  "check_commands_sha256": "59a8c51af5e408ac2e7fb21459fd249ba612e8f85bfe98f8cdbcb7ce7f95a7f5",
+  "manual_help": [
+    "Repository, Änderungsbereich und geschützte Tests wurden vorab festgelegt. Der vollständige Nutzerprompt steht im Feld task. Das Harness fügt keinen Lösungshinweis oder Codeausschnitt hinzu."
+  ],
+  "events_truncated": false
+}

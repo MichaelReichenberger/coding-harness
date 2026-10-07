@@ -1,23 +1,16 @@
-# Video-Drehbuch: maximal 3:40 Minuten Inhalt
+# Demo video script — approximately 3:30 minutes
 
-Die PDF erlaubt höchstens vier Minuten. Erst aufnehmen, wenn Docker funktioniert und
-ein echter Lauf mit dem gewünschten Modell vorliegt. Kein vorbereiteter Patch wird abgespielt.
+Use `qwen2.5-coder:7b` and the [README prompt](../README.md#beispielprompt).
+Record an actual run. If it fails, show the failure honestly or clearly identify a
+previous successful run. The Stage-1 limit is four minutes.
 
-| Zeit | Bild und Erklärung |
-|---|---|
-| 0:00–0:25 | Eigenes Python-Harness; Repository und exakten Ausgangscommit zeigen. |
-| 0:25–0:50 | Leeres Aufgabenfeld, installierten Modellnamen und selbst formulierten Bugfix-Prompt zeigen. Fachliche Stückmengen-Anforderung ohne Reparaturanweisung erklären. |
-| 0:50–1:15 | Vorbereitete geschützte Akzeptanz: rote ungerade Mengen, grüne Kontrollen und Regressionen. |
-| 1:15–2:00 | Echten Lauf: Modell liest/sucht, Harness validiert und zählt, Tools liefern Beobachtungen. Wartezeiten transparent kürzen. |
-| 2:00–2:30 | Tatsächlich entstandenen Diff zeigen; keine bestimmte Änderung vorwegnehmen. |
-| 2:30–2:55 | Unabhängige Endprüfung mit grüner Akzeptanz und vorhandenen Regressionstests. |
-| 2:55–3:20 | Controller-Schleife, Dockergrenze, Aktions-/Zeit-/Ausgabelimits erläutern. |
-| 3:20–3:40 | Bericht/Downloads, manuelle Testvorbereitung und verbleibende Grenzen nennen. |
-
-Zusätzlich kann ein automatisierter Limit-Test kurz gezeigt werden. Er ist ausdrücklich
-simuliert. Ein gescheiterter Modelllauf wird ehrlich ausgewiesen und ersetzt nicht den
-von der PDF verlangten erfolgreichen Bugfix-Nachweis. Falls der Prüfer mit einem anderen
-Prompt experimentiert, die Reichweite der vorhandenen Akzeptanz erklären.
-
-Historische Läufe mit Lösungshilfe nur als solche benennen. Für die neue Fassung einen
-neuen Lauf verwenden. Repositorylink und Videoaufnahme sind weiterhin Nutzeraufgaben.
+| Time | Show | Say |
+|---|---|---|
+| 0:00–0:25 | Interface, target repository and commit | This is my own coding harness built in Python. It connects a local Ollama model to restricted file tools and isolated tests. The target is the Supermarket Receipt Kata at a fixed starting commit. |
+| 0:25–0:50 | Task field and model name | The task fixes receipt printing. EACH quantities should appear as whole numbers. Weights keep three decimal places and prices keep two. The prompt describes behavior without supplying a patch. |
+| 0:50–1:10 | Environment check, enter prompt, start | Each run begins with a fresh repository copy. The baseline acceptance test fails as expected, while both regression checks pass. |
+| 1:10–1:50 | Progress and tool calls | The model reads the printing code and requests an edit. The controller validates each call and permits changes only in the configured scope. The model then requests the checks. |
+| 1:50–2:20 | Actual diff | In this successful run, only EACH quantity formatting changed. Stored quantities, weight formatting and pricing remain unchanged. The diff shows the exact edit. |
+| 2:20–2:50 | Independent final checks and report | A completion message does not prove success. The harness independently repeats the protected checks. Here, acceptance and both regression checks pass. The report and diff are downloadable. |
+| 2:50–3:15 | README architecture diagram | The controller manages the loop, file tools enforce permissions, and Docker isolates repository code and tests. Action, time and output limits bound the run. The model cannot edit tests or execute arbitrary shell commands. |
+| 3:15–3:30 | README and repository link | Setup was checked using a fresh clone. Manual assistance consisted of task selection, protected test preparation and a refined prompt with a file hint. No ready-made patch was supplied. |

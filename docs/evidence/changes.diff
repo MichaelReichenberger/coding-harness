@@ -1,0 +1,12 @@
+diff --git a/receipt_printer.py b/receipt_printer.py
+--- a/receipt_printer.py
++++ b/receipt_printer.py
+@@ -41,7 +41,7 @@
+ 
+     def print_quantity(self, item):
+         if ProductUnit.EACH == item.product.unit:
+-            return str(item.quantity)
++            return str(int(item.quantity))
+         else:
+             return '%.3f' % item.quantity
+ 

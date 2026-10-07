@@ -1,3 +1,0 @@
-# No third-party target runtime or test dependencies.
-# Python's standard library unittest runs the selected upstream test and trusted checks.
-# Python 3.12 and the OS image are pinned by digest in Dockerfile.

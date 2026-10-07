@@ -1,0 +1,150 @@
+{
+  "date": "2026-10-07T17:10:10.026098+00:00",
+  "platform": "Windows-11-10.0.22631-SP0",
+  "python": "3.13.2 (tags/v3.13.2:4f8bb39, Feb  4 2025, 15:23:48) [MSC v.1942 64 bit (AMD64)]",
+  "checks": [
+    {
+      "name": "dependencies",
+      "command": [
+        "C:\\Users\\Development\\source\\coding-harness\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pip",
+        "check"
+      ],
+      "exit_code": 0,
+      "seconds": 0.41,
+      "output": "No broken requirements found.\n"
+    },
+    {
+      "name": "setup",
+      "command": [
+        "C:\\Users\\Development\\source\\coding-harness\\.venv\\Scripts\\python.exe",
+        "-m",
+        "harness",
+        "setup",
+        "--build"
+      ],
+      "exit_code": 0,
+      "seconds": 2.01,
+      "output": "Supermarket-Commit vorhanden: c72d68abd77a417f84193b72a3b8d14177336066\n #0 building with \"desktop-linux\" instance using docker driver\n\n#1 [internal] load build definition from Dockerfile\n#1 transferring dockerfile: 320B 0.0s done\n#1 DONE 0.0s\n\n#2 [internal] load metadata for docker.io/library/python:3.12-slim@sha256:02108f5d322dd89f1c9e552442c25acb0543dfdbc455693a5599624f20d9155d\n#2 DONE 0.1s\n\n#3 [internal] load .dockerignore\n#3 transferring context: 76B done\n#3 DONE 0.0s\n\n#4 [1/3] FROM docker.io/library/python:3.12-slim@sha256:02108f5d322dd89f1c9e552442c25acb0543dfdbc455693a5599624f20d9155d\n#4 resolve docker.io/library/python:3.12-slim@sha256:02108f5d322dd89f1c9e552442c25acb0543dfdbc455693a5599624f20d9155d 0.1s done\n#4 DONE 0.1s\n\n#5 [2/3] RUN useradd --uid 10001 --create-home sandbox && mkdir -p /repo /trusted\n#5 CACHED\n\n#6 [3/3] WORKDIR /repo\n#6 CACHED\n\n#7 exporting to image\n#7 exporting layers done\n#7 exporting manifest sha256:22db6b87fcaef3db97bb6a9f7bd5c3b1f37ffb1b28985bf61790585c5f4ed3c3 done\n#7 exporting config sha256:ff32b52ff090343ac15bb453d31f4f600d647c64d20f11e4ab27a91971d8940c done\n#7 exporting attestation manifest sha256:2564546ee0d3382720c0a1d49dad76bb72a10560bc4c4e28aea02eb3d5233d41 0.1s done\n#7 exporting manifest list sha256:3465d23bec6185b680172d5c3bf6d660b6efb533f6df1f0294d415d92ff6a885\n#7 exporting manifest list sha256:3465d23bec6185b680172d5c3bf6d660b6efb533f6df1f0294d415d92ff6a885 0.0s done\n#7 naming to docker.io/library/supermarket-harness:stage1 done\n#7 unpacking to docker.io/library/supermarket-harness:stage1 0.0s done\n#7 DONE 0.2s\n\nView build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/4dd3pt6jf47jnohnjswh1cugv\n\n"
+    },
+    {
+      "name": "doctor",
+      "command": [
+        "C:\\Users\\Development\\source\\coding-harness\\.venv\\Scripts\\python.exe",
+        "-m",
+        "harness",
+        "doctor"
+      ],
+      "exit_code": 0,
+      "seconds": 1.44,
+      "output": "{\n  \"checks\": [\n    {\n      \"component\": \"Python\",\n      \"ready\": true,\n      \"detail\": \"3.13.2\"\n    },\n    {\n      \"component\": \"streamlit\",\n      \"ready\": true,\n      \"detail\": \"1.65.0\"\n    },\n    {\n      \"component\": \"pydantic\",\n      \"ready\": true,\n      \"detail\": \"2.13.5\"\n    },\n    {\n      \"component\": \"httpx\",\n      \"ready\": true,\n      \"detail\": \"0.28.1\"\n    },\n    {\n      \"component\": \"pytest\",\n      \"ready\": true,\n      \"detail\": \"9.1.1\"\n    },\n    {\n      \"component\": \"git\",\n      \"ready\": true,\n      \"detail\": \"C:\\\\Program Files\\\\Git\\\\cmd\\\\git.EXE\"\n    },\n    {\n      \"component\": \"docker\",\n      \"ready\": true,\n      \"detail\": \"C:\\\\Program Files\\\\Docker\\\\Docker\\\\resources\\\\bin\\\\docker.EXE\"\n    },\n    {\n      \"component\": \"Docker-Daemon\",\n      \"ready\": true,\n      \"detail\": \"linux\\n\"\n    },\n    {\n      \"component\": \"Sandbox-Image\",\n      \"ready\": true,\n      \"detail\": \"sha256:3465d23bec6185b680172d5c3bf6d660b6efb533f6df1f0294d415d92ff6a885\\n\"\n    },\n    {\n      \"component\": \"Supermarket-Commit\",\n      \"ready\": true,\n      \"detail\": \"c72d68abd77a417f84193b72a3b8d14177336066\"\n    },\n    {\n      \"component\": \"Ollama\",\n      \"ready\": true,\n      \"detail\": {\n        \"ready\": true,\n        \"models\": [\n          \"qwen2.5-coder:7b\"\n        ],\n        \"capabilities\": [\n          \"completion\",\n          \"tools\",\n          \"insert\"\n        ],\n        \"reason\": \"\"\n      }\n    }\n  ],\n  \"core_tests_ready\": true,\n  \"sandbox_ready\": true,\n  \"live_ready\": true,\n  \"note\": \"Fehlende Infrastruktur wird nie durch Host-Ausführung ersetzt. UI-Diagnose bleibt verfügbar.\"\n}\n"
+    },
+    {
+      "name": "offline_tests",
+      "command": [
+        "C:\\Users\\Development\\source\\coding-harness\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp=.harness/verification/offline"
+      ],
+      "exit_code": 0,
+      "seconds": 4.83,
+      "output": "..................sssss.........................................         [100%]\n============================== warnings summary ===============================\ntests/test_controller.py: 44 warnings\ntests/test_repository.py: 22 warnings\n  C:\\Users\\Development\\source\\coding-harness\\harness\\repository.py:146: DeprecationWarning: pathlib.PurePath.is_reserved() is deprecated and scheduled for removal in Python 3.15. Use os.path.isreserved() to detect reserved paths on Windows.\n    or PureWindowsPath(part).is_reserved()\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n=========================== short test summary info ===========================\nSKIPPED [3] tests\\test_docker.py: Docker integration explicitly disabled; use --docker\nSKIPPED [2] tests\\test_docker.py:77: Docker integration explicitly disabled; use --docker\n59 passed, 5 skipped, 66 warnings in 4.22s\n"
+    },
+    {
+      "name": "docker_tests",
+      "command": [
+        "C:\\Users\\Development\\source\\coding-harness\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "-q",
+        "--docker",
+        "-m",
+        "docker",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp=.harness/verification/docker"
+      ],
+      "exit_code": 0,
+      "seconds": 27.56,
+      "output": ".....                                                                    [100%]\n============================== warnings summary ===============================\ntests/test_docker.py::test_scripted_bugfix_red_green_in_real_sandbox\n  C:\\Users\\Development\\source\\coding-harness\\harness\\repository.py:146: DeprecationWarning: pathlib.PurePath.is_reserved() is deprecated and scheduled for removal in Python 3.15. Use os.path.isreserved() to detect reserved paths on Windows.\n    or PureWindowsPath(part).is_reserved()\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n5 passed, 59 deselected, 1 warning in 26.95s\n"
+    },
+    {
+      "name": "ruff",
+      "command": [
+        "C:\\Users\\Development\\source\\coding-harness\\.venv\\Scripts\\python.exe",
+        "-m",
+        "ruff",
+        "check",
+        "--no-cache",
+        "harness",
+        "app.py",
+        "tests",
+        "checks/entry.py",
+        "checks/acceptance.py",
+        "checks/scenario.py",
+        "checks/pricing_regression.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.14,
+      "output": "All checks passed!\n"
+    },
+    {
+      "name": "baseline",
+      "command": [
+        "C:\\Users\\Development\\source\\coding-harness\\.venv\\Scripts\\python.exe",
+        "-m",
+        "harness",
+        "baseline"
+      ],
+      "exit_code": 0,
+      "seconds": 7.21,
+      "output": "Lauf: 20261007T171046Z-0135ee0e\nstate preparing \nstate preflight \nstate baseline \ncheck acceptance failed\ncheck regression_core passed\n{\"state\": \"baseline_checked\", \"reason\": \"Ausgangszustand geprüft; Einzelergebnisse stehen im Bericht\", \"report\": \"C:\\\\Users\\\\Development\\\\source\\\\coding-harness\\\\.harness\\\\runs\\\\20261007T171046Z-0135ee0e\\\\report.json\"}\n"
+    },
+    {
+      "name": "real_model",
+      "command": [
+        "C:\\Users\\Development\\source\\coding-harness\\.venv\\Scripts\\python.exe",
+        "-m",
+        "harness",
+        "run",
+        "--task",
+        "Fix the receipt quantity display for products sold by EACH. A quantity of 3.0 must appear as 3 on the printed receipt; 2.0 as 2; 5.0 as 5. Quantities of KILO products must still appear with three decimal places, for example 1.500. All monetary prices must still have two decimal places, for example 1.25. Keep stored quantities and pricing unchanged. First read the entire receipt_printer.py. Distinguish the quantity formatter from the price formatter, and change only the EACH quantity formatting. Use the exact source text you read for replace_text. Then run acceptance, regression_core and regression_pricing. If all pass, finish; if a check fails, reread the code before another edit."
+      ],
+      "exit_code": 0,
+      "seconds": 30.51,
+      "output": "Lauf: 20261007T171054Z-a4859127\nstate preparing \nstate preflight \nstate baseline \ncheck acceptance failed\ncheck regression_core passed\ncheck regression_pricing passed\nstate running \nmodel_request  \ntool read_file \nmodel_request  \ntool replace_text \nmodel_request  \ncheck acceptance passed\ntool run_check \nmodel_request  \ncheck regression_core passed\ntool run_check \nmodel_request  \ncheck regression_pricing passed\ntool run_check \nmodel_request  \ntool finish \nstate verifying \ncheck acceptance passed\ncheck regression_core passed\n{\"state\": \"passed\", \"reason\": \"Fixed receipt quantity display for products sold by EACH. All checks passed.\", \"report\": \"C:\\\\Users\\\\Development\\\\source\\\\coding-harness\\\\.harness\\\\runs\\\\20261007T171054Z-a4859127\\\\report.json\"}\n"
+    },
+    {
+      "name": "ui_smoke",
+      "command": [
+        "streamlit run app.py --server.address 127.0.0.1 --server.port 8502",
+        "GET /_stcore/health",
+        "GET /"
+      ],
+      "exit_code": 0,
+      "output": "Health: ok; HTTP: 200. Testserver wurde nach Prüfung beendet."
+    },
+    {
+      "name": "final_full_suite",
+      "command": [
+        "C:\\Users\\Development\\source\\coding-harness\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "-q",
+        "--docker",
+        "-p",
+        "no:cacheprovider"
+      ],
+      "exit_code": 0,
+      "seconds": 33.5,
+      "output": "................................................................         [100%]\n============================== warnings summary ===============================\ntests/test_controller.py: 44 warnings\ntests/test_docker.py: 1 warning\ntests/test_repository.py: 22 warnings\n  C:\\Users\\Development\\source\\coding-harness\\harness\\repository.py:146: DeprecationWarning: pathlib.PurePath.is_reserved() is deprecated and scheduled for removal in Python 3.15. Use os.path.isreserved() to detect reserved paths on Windows.\n    or PureWindowsPath(part).is_reserved()\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n64 passed, 67 warnings in 32.91s\n"
+    }
+  ],
+  "model_run_id": "20261007T171054Z-a4859127",
+  "completed": true
+}
