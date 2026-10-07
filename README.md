@@ -47,7 +47,7 @@ py -3 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.lock
 ```
 
-`py -3` muss Python ab 3.12 auswählen; mit `py -3 --version` prüfen. `.venv` trennt
+`py -3` muss Python 3.12 auswählen; mit `py -3 --version` prüfen. `.venv` trennt
 die Projektpakete von anderen Python-Projekten. `requirements.lock` enthält unter
 anderem Streamlit für die Oberfläche und die Pakete für Modellkommunikation und Tests.
 Eine Aktivierung der Umgebung ist nicht nötig: Alle Befehle verwenden ihren Interpreter direkt.
