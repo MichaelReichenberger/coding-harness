@@ -195,7 +195,7 @@ sequenceDiagram
     participant M as Ollama
     participant T as Werkzeuge
     participant V as Verifier / Docker
-    U->>C: Eigener Prompt; neue Commitkopie
+    U->>C: Eigener Prompt, neue Commitkopie
     C->>V: Alle Checks als Baseline
     V-->>C: Status, Ausgabe, Exit-Codes
     loop bis finish oder Abbruch/Limit/Fehler

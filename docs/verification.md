@@ -12,6 +12,7 @@ Windows, Python 3.13.2, Streamlit 1.65.0, Ollama 0.40.0,
 | Offline-Tests | 59 bestanden, 5 Docker-Fälle explizit übersprungen; 4.8 s einschließlich Prozessstart |
 | Echte Docker-Tests | 5 bestanden, 59 abgewählt; 27.6 s einschließlich Prozessstart |
 | Gesamtsuite nach abschließender Bereinigung | **64 bestanden**, inklusive aller echten Docker-Tests; 32,91 s |
+| Mermaid-Diagramme | beide mit Mermaid 11.17.2 erfolgreich geparst; Semikolon im Sequenztext korrigiert |
 | Ruff | bestanden |
 | `harness baseline` | fachlich rote Akzeptanz, grüne Regressionen; Exit-Code 0 |
 | Streamlit | Health `ok`, Webseite HTTP 200 auf Testport 8502; UI-Tests in Offline-Suite enthalten |

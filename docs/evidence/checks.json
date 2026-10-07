@@ -143,6 +143,14 @@
       "exit_code": 0,
       "seconds": 33.5,
       "output": "................................................................         [100%]\n============================== warnings summary ===============================\ntests/test_controller.py: 44 warnings\ntests/test_docker.py: 1 warning\ntests/test_repository.py: 22 warnings\n  C:\\Users\\Development\\source\\coding-harness\\harness\\repository.py:146: DeprecationWarning: pathlib.PurePath.is_reserved() is deprecated and scheduled for removal in Python 3.15. Use os.path.isreserved() to detect reserved paths on Windows.\n    or PureWindowsPath(part).is_reserved()\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n64 passed, 67 warnings in 32.91s\n"
+    },
+    {
+      "name": "mermaid_syntax",
+      "command": [
+        "mermaid.parse: beide Diagramme in README.md"
+      ],
+      "exit_code": 0,
+      "output": "Mermaid 11.17.2: ursprünglicher Semikolon-Fehler reproduziert; korrigiertes flowchart-v2 und sequence erfolgreich geparst."
     }
   ],
   "model_run_id": "20261007T171054Z-a4859127",
