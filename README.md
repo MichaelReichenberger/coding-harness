@@ -13,7 +13,7 @@ Diese README enthält Einrichtung, Bedienung, Klassen, Architektur und Diagramme
 
 ### Auf einem anderen Windows-PC
 
-1. Installiere [Python ab 3.12](https://www.python.org/downloads/windows/) mit
+1. Installiere [Python 3.12](https://www.python.org/downloads/windows/) mit
    Python-Launcher und PATH-Eintrag sowie [Git](https://git-scm.com/download/win).
    Python führt den Harness aus; Git lädt das Projekt und den fixierten Zielcommit.
 2. Installiere und starte [Docker Desktop](https://www.docker.com/products/docker-desktop/).
@@ -47,7 +47,7 @@ py -3 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.lock
 ```
 
-`py -3` muss Python ab 3.12 auswählen; mit `py -3 --version` prüfen. `.venv` trennt
+`py -3` muss Python 3.12 auswählen; mit `py -3 --version` prüfen. `.venv` trennt
 die Projektpakete von anderen Python-Projekten. `requirements.lock` enthält unter
 anderem Streamlit für die Oberfläche und die Pakete für Modellkommunikation und Tests.
 Eine Aktivierung der Umgebung ist nicht nötig: Alle Befehle verwenden ihren Interpreter direkt.
