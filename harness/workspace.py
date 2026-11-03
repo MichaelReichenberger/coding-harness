@@ -120,9 +120,20 @@ class Workspace:
         export_commit(self.reference, self.target.commit, self.repo, self.target.subdirectory)
         shutil.copytree(self.repo, self.base)
 
+    @classmethod
+    def reopen(cls, target, home, run_id):
+        """S2-S: Nur Pfade binden; niemals Export/Reset über vorhandene Edits."""
+        workspace = cls(target, home)
+        workspace.run_id = run_id
+        workspace.path = workspace.home / "runs" / run_id
+        workspace.repo, workspace.base = workspace.path / "repo", workspace.path / "base"
+        return workspace
+
     def diff(self, limit: int = 2 * 1024 * 1024) -> tuple[str, list[str], bool]:
         """Dateilisten bleiben vollständig; nur der Difftext kann gekürzt werden."""
-        before, after = tree_hashes(self.base), tree_hashes(self.repo)
+        from harness.sessions import checked_hashes
+
+        before, after = checked_hashes(self.base), checked_hashes(self.repo)
         changed = sorted(p for p in before.keys() | after.keys() if before.get(p) != after.get(p))
         output = io.StringIO()
         for name in changed:

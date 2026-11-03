@@ -1,0 +1,56 @@
+{
+  "recorded_by": "Implementation assistant from actual command output; not a simulated feature success",
+  "date": "2026-11-03",
+  "version": "0.2.0",
+  "base_commit": "08aad834732bbddf397c5c446f8844722bc7f147",
+  "tests": {
+    "command": "python -m pytest -q --docker -p no:cacheprovider --basetemp=.harness/stage2-verified-release",
+    "passed": 86,
+    "failed": 0,
+    "seconds": 158.94,
+    "includes_real_docker_tests": 6
+  },
+  "ruff": {
+    "check": "passed",
+    "format_files": 30
+  },
+  "pip_check": "No broken requirements found",
+  "feature_baseline_run": "20261103T152449Z-5472de68",
+  "feature_baseline": "expected business failure, legacy controls and regressions/lint passed",
+  "scripted_feature_test": "failed -> failed -> passed; all final checks passed; explicitly simulated model",
+  "real_model": {
+    "model": "qwen2.5-coder:7b",
+    "gpu_run": "20261103T152754Z-36b4686b",
+    "gpu_result": "model_error: CUDA device kernel image is invalid",
+    "cpu_run": "20261103T153055Z-1ebf09b6",
+    "cpu_result": "limit_reached",
+    "feature_success": false,
+    "actions": 40,
+    "rounds": 42,
+    "requests": 43,
+    "retries": 1,
+    "denials": 9,
+    "clean_cancellations": 4,
+    "final_checks": "not_run",
+    "harness_containers_remaining": 0
+  },
+  "environment": {
+    "python": "3.12.14",
+    "streamlit": "1.65.0",
+    "ollama": "0.40.7",
+    "gpu": "RTX 3070 Laptop GPU",
+    "driver": "560.70",
+    "num_gpu_for_cpu_session": 0
+  },
+  "manual_help": [
+    "Prepared protected feature checks and named public APIs in the task",
+    "Explicit CPU fallback after observed CUDA runner failure; no driver/software update",
+    "Manual cancel/open/resume demonstrations and generic context/checkpoint fixes under test",
+    "No target code patch supplied by the implementation assistant"
+  ],
+  "remaining": [
+    "Successful real-model feature run with independent passing final checks",
+    "Video no longer than four minutes",
+    "User Moodle submission"
+  ]
+}

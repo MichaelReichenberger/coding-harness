@@ -43,6 +43,8 @@ class Settings(StrictModel):
 
     ollama_base_url: str = "http://127.0.0.1:11434"
     model: str = Field(default="qwen2.5-coder:7b", min_length=1, max_length=200)
+    # S2-D: Optionaler Request-Override bei defektem CUDA-Runner; kein Systemeingriff.
+    num_gpu: int | None = Field(default=None, ge=0, le=1000)
     image: str = Field(
         default="docker.io/library/supermarket-harness:stage1",
         pattern=r"^[a-zA-Z0-9][a-zA-Z0-9_./:@-]{0,200}$",
@@ -86,8 +88,29 @@ def load_settings(path: Path | None = None) -> Settings:
     for env, key in [("HARNESS_OLLAMA_BASE_URL", "ollama_base_url"), ("HARNESS_MODEL", "model")]:
         if env in os.environ:
             data[key] = os.environ[env]
+    if "HARNESS_NUM_GPU" in os.environ:
+        data["num_gpu"] = int(os.environ["HARNESS_NUM_GPU"])
     return Settings.model_validate(data)
 
 
 def load_target() -> Target:
     return Target.model_validate(json.loads((ROOT / "config/target.json").read_text("utf-8")))
+
+
+PROJECTS = {"supermarket": "Supermarket Receipt"}
+PROFILES = ("bugfix", "feature")
+
+
+def select_project(project: str) -> Target:
+    """S2-I: Nur die explizite Allowlist, niemals ein frei eingegebener Hostpfad."""
+    if project not in PROJECTS:
+        raise ValueError("Projekt nicht freigegeben")
+    return load_target()
+
+
+FEATURE_CRITERIA = (
+    "Optional service_fee on Teller.checks_out_articles_from and Receipt construction; "
+    "default zero preserves existing callers. Add the fee once after existing discounts. "
+    "Reject negative, non-finite and non-numeric fees (including bool) with ValueError. "
+    "Keep quantities and existing pricing rules unchanged."
+)

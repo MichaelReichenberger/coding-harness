@@ -5,11 +5,12 @@ RunService; das Fragment liest regelmäßig den laufenden Worker aus. Dadurch
 startet ein Neuzeichnen keinen zweiten Lauf und Abbrechen bleibt erreichbar.
 """
 
+import json
 from pathlib import Path
 
 import streamlit as st
 
-from harness.config import load_settings, load_target
+from harness.config import PROFILES, PROJECTS, load_settings, load_target
 from harness.doctor import doctor
 from harness.service import RunService
 
@@ -23,9 +24,7 @@ def get_service():
 
 def main():
     st.title("Supermarket Coding Harness")
-    st.caption(
-        "Stage 1 · Python-Controller · isolierte Linux-Container · nachvollziehbare Prüfungen"
-    )
+    st.caption("Stage 2 · Navigation · begrenzter Kontext · sichere Sitzungen · Docker-Checks")
     try:
         settings = load_settings()
         service = get_service()
@@ -35,6 +34,8 @@ def main():
         return
     with st.sidebar:
         st.subheader("Ziel und Umgebung")
+        project = st.selectbox("Freigegebenes Projekt", list(PROJECTS), disabled=service.active)
+        profile = st.selectbox("Aufgabenart", list(PROFILES), disabled=service.active)
         st.write(target.name)
         st.write(target.url)
         st.caption("Teilprojekt: " + target.subdirectory)
@@ -64,9 +65,30 @@ def main():
         placeholder="Beschreibe den Fehler und das gewünschte Verhalten.",
     )
     st.caption(
-        "Alle Läufe prüfen Stückmengen im Belegdruck und bestehende Preisregeln. "
+        "bugfix prüft Stückmengen; feature prüft die optionale Servicegebühr und Syntaxlint. "
         "Für andere Anforderungen braucht es passende geschützte Tests. Siehe docs/task.md."
     )
+    with st.expander("Gespeicherte Sitzungen öffnen und fortsetzen"):
+        sessions = service.sessions()
+        ids = [item["run_id"] for item in sessions]
+        if ids:
+            selected = st.selectbox("Sitzung", ids, disabled=service.active)
+            st.json(next(item for item in sessions if item["run_id"] == selected))
+            opened, resumed = st.columns(2)
+            if opened.button("Sitzung öffnen", disabled=service.active):
+                try:
+                    service.open(selected)
+                    st.rerun()
+                except Exception as exc:
+                    st.error(str(exc))
+            if resumed.button("Sicher fortsetzen", disabled=service.active):
+                try:
+                    service.resume(selected)
+                    st.rerun()
+                except Exception as exc:
+                    st.warning(str(exc))
+        else:
+            st.caption("Noch keine gespeicherten Stage-2-Sitzungen.")
 
     @st.fragment(run_every=0.5)
     def monitor():
@@ -80,7 +102,7 @@ def main():
             "Lauf starten", type="primary", disabled=snapshot["active"] or not task.strip()
         ):
             try:
-                service.start(task, model_name=model_name)
+                service.start(task, model_name=model_name, project=project, profile=profile)
                 st.rerun()
             except Exception as exc:
                 st.error(str(exc))
@@ -96,6 +118,10 @@ def main():
             st.caption("Lauf-ID: " + snapshot["run_id"])
         report = snapshot["report"]
         if report:
+            if report.get("task"):
+                with st.expander("Gespeicherter Auftrag und Schritte"):
+                    st.write(report["task"])
+                    st.json(report.get("steps", []))
             if report.get("simulated"):
                 st.warning("Dieser Lauf ist eine Simulation.")
             if report["success"]:
@@ -115,7 +141,9 @@ def main():
             if report:
                 st.write("Geänderte Dateien:", report.get("changed_files", []))
                 diff_path = Path(snapshot["path"]) / "changes.diff"
-                diff = diff_path.read_text("utf-8") if diff_path.exists() else ""
+                diff = snapshot.get("diff")
+                if diff is None:
+                    diff = diff_path.read_text("utf-8") if diff_path.exists() else ""
                 if report.get("diff_truncated"):
                     st.warning("Diff wegen Artefaktlimit gekürzt.")
                 st.code(diff or "Keine Änderungen", language="diff")
@@ -124,13 +152,17 @@ def main():
                 )
                 st.download_button(
                     "Laufbericht herunterladen",
-                    (Path(snapshot["path"]) / "report.json").read_bytes(),
+                    json.dumps(report, ensure_ascii=False, indent=2),
                     file_name="report.json",
                     mime="application/json",
                 )
             else:
                 st.info("Der vollständige Diff steht nach Laufende bereit, auch nach Abbruch.")
         with checks:
+            if report and report.get("unfinished_work"):
+                st.warning(" · ".join(report["unfinished_work"]))
+            if report and report.get("pending"):
+                st.error("Unsichere unterbrochene Aktion: keine automatische Wiederholung")
             records = (
                 report.get("checks", [])
                 if report

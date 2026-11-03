@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "supermarket-coding-harness"
-version = "0.1.0"
-description = "A local, contained Python coding harness for the small Supermarket Receipt Python project"
+version = "0.2.0"
+description = "A contained Python coding harness with navigation, bounded context and safe saved sessions"
 requires-python = ">=3.12"
 dependencies = ["streamlit==1.65.0", "httpx==0.28.1", "pydantic==2.13.5"]
 

@@ -1,3 +1,37 @@
+# Stage-2-Verifikation · 03.11.2026
+
+Die finale Gesamtsuite auf Version 0.2.0 bestand mit **86 Tests inklusive sechs echter
+Docker-Fälle**, 158,94 s. Ruff bestanden, 30 Python-Dateien korrekt formatiert.
+Keine Paketkonflikte. Vollständiger aktueller Stand, echte Modellfehler/-läufe und
+Restschritte: [implementation-status.md](implementation-status.md).
+
+Der deterministische Featuretest belegt geschützte rote/grüne Akzeptanz über zwei
+Module mit erhaltener Regression. Er ist ausdrücklich kein echter Modellnachweis.
+Der reale GPU-Runner scheiterte vor dem Coding an CUDA. Der separate CPU-Lauf mit 7B
+endete bei 40 Aktionen als limit_reached, ohne erfolgreichen Fix. Alle vier aktuellen
+Endchecks sind not_run; ältere Endchecks bleiben previous_final. Die vier tatsächlichen
+Abbrüche und Fortsetzungen erhielten eigene Edits und verbrauchte Limits. Die Dateien
+unter docs/evidence/stage-2 wurden unverändert aus diesem echten Lauf kopiert.
+Kein manuell eingesetzter Zielpatch, kein erfolgreicher Modellnachweis.
+
+## Prüfungen reproduzieren
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest -q
+.\.venv\Scripts\python.exe -m pytest -q --docker
+.\.venv\Scripts\python.exe -m ruff check harness app.py tests checks/entry.py checks/feature.py
+.\.venv\Scripts\python.exe -m harness baseline --profile feature
+```
+
+Tests für Safe Resume umfassen eigene Änderungen, neue Dateien, Hardlinks, geänderte
+Policy/Baseline, verbrauchte Limits und harte Unterbrechung vor einem Edit. Ein
+Abbruch während einer Modellanfrage verwirft auch eine verspätete Schreibantwort.
+Kontexttests zählen vollständige Payloads, erhalten trusted Kriterien und prüfen
+explizit, dass Checkpointkompression folgende Fehlcheckbeobachtungen nicht verliert.
+Historische Endchecks werden nach Resume nicht als aktuelle Prüfung wiederverwendet.
+
+## Historischer Stage-1-Nachweis (unverändert)
+
 # Abschließende Verifikation
 
 Stand: 07.10.2026. Prüfung nach Bereinigung und Zusammenführung der Dokumentation.

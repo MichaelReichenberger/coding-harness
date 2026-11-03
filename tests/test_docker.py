@@ -165,3 +165,67 @@ def test_scripted_bugfix_red_green_in_real_sandbox(tmp_path):
     assert report["success"] and report["simulated"], report
     assert report["changed_files"] == ["receipt_printer.py"]
     assert all(c["status"] == "passed" for c in report["checks"] if c["phase"] == "final")
+
+
+def test_stage2_feature_failed_check_then_fix_in_real_sandbox(tmp_path):
+    """S2-F/Tests: feste Antworten nur hier, niemals als echter Modellnachweis."""
+    from harness.config import ROOT, load_target
+    from harness.controller import Controller
+    from harness.models import ScriptedModelClient, tool_reply
+    from harness.sandbox import FEATURE_CHECKS
+    from harness.store import RunStore
+    from harness.workspace import Workspace
+
+    workspace = Workspace(load_target(), tmp_path)
+    workspace.reference = ROOT / ".harness/reference/supermarket-receipt"
+    workspace.create()
+    settings = load_settings()
+    runner = DockerRunner(
+        workspace.repo, ROOT / "checks", settings.image, workspace.run_id, settings.limits
+    )
+    runner.checks = dict(FEATURE_CHECKS)
+    model = ScriptedModelClient(
+        [
+            tool_reply("inspect_repository", query="Receipt Teller"),
+            tool_reply("run_check", check_id="feature"),
+            tool_reply(
+                "replace_text",
+                path="receipt.py",
+                old="    def __init__(self):\n        self._items = []\n        self._discounts = []",
+                new="    def __init__(self, service_fee=0):\n        import math\n        if isinstance(service_fee, bool) or not isinstance(service_fee, (int, float)) or not math.isfinite(service_fee) or service_fee < 0:\n            raise ValueError('service_fee must be a finite non-negative number')\n        self.service_fee = service_fee\n        self._items = []\n        self._discounts = []",
+            ),
+            tool_reply("run_check", check_id="feature"),
+            tool_reply(
+                "replace_text",
+                path="teller.py",
+                old="def checks_out_articles_from(self, the_cart):\n        receipt = Receipt()",
+                new="def checks_out_articles_from(self, the_cart, service_fee=0):\n        receipt = Receipt(service_fee=service_fee)",
+            ),
+            tool_reply(
+                "replace_text",
+                path="receipt.py",
+                old="        return total",
+                new="        return total + self.service_fee",
+            ),
+            tool_reply("run_check", check_id="feature"),
+            tool_reply("finish", summary="Nur deterministische Feature-Testfixture"),
+        ]
+    )
+    controller = Controller(
+        workspace,
+        settings,
+        model,
+        runner,
+        RunStore(workspace.path, settings.limits.artifact_bytes),
+        threading.Event(),
+        "Optional service fee with legacy calls and invalid value errors",
+        profile="feature",
+    )
+    report = controller.run()
+    assert report["baseline_feature_reproduced"], report
+    assert report["success"] and report["simulated"], report
+    assert report["changed_files"] == ["receipt.py", "teller.py"]
+    agent_checks = [c for c in report["checks"] if c["phase"] == "agent"]
+    assert [c["status"] for c in agent_checks] == ["failed", "failed", "passed"]
+    assert all(c["status"] == "passed" for c in report["checks"] if c["phase"] == "final")
+    assert "failed" in model.requests[2][-1]["content"]

@@ -2,6 +2,8 @@
 # Modellname ist frei wählbar; das Modell muss in Ollama installiert sein.
 ollama_base_url = "http://127.0.0.1:11434"
 model = "qwen2.5-coder:7b"
+# Optional: num_gpu = 0 erzwingt CPU nur für diese Modellanfragen, z.B. bei CUDA-Fehlern.
+# num_gpu = 0
 image = "docker.io/library/supermarket-harness:stage1"
 
 [limits]
@@ -12,5 +14,6 @@ check_seconds = 120
 model_seconds = 180
 output_bytes = 65536
 file_bytes = 262144
+# Stage 2 feature begrenzt zusätzlich auf höchstens 32768 Bytes (CPU: 16384) inkl. Tooldefinitionen.
 context_bytes = 196608
 artifact_bytes = 8388608

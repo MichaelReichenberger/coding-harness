@@ -1,16 +1,19 @@
-# Demo video script — approximately 3:30 minutes
+# Stage-2-Demo · höchstens vier Minuten
 
-Use `qwen2.5-coder:7b` and the [README prompt](../README.md#beispielprompt).
-Record an actual run. If it fails, show the failure honestly or clearly identify a
-previous successful run. The Stage-1 limit is four minutes.
+Nur tatsächliche Ergebnisse zeigen. Wartezeiten dürfen transparent gekürzt werden.
+Ein fehlgeschlagener Modelllauf wird nicht als erfolgreicher Feature-Nachweis verkauft.
 
-| Time | Show | Say |
-|---|---|---|
-| 0:00–0:25 | Interface, target repository and commit | This is my own coding harness built in Python. It connects a local Ollama model to restricted file tools and isolated tests. The target is the Supermarket Receipt Kata at a fixed starting commit. |
-| 0:25–0:50 | Task field and model name | The task fixes receipt printing. EACH quantities should appear as whole numbers. Weights keep three decimal places and prices keep two. The prompt describes behavior without supplying a patch. |
-| 0:50–1:10 | Environment check, enter prompt, start | Each run begins with a fresh repository copy. The baseline acceptance test fails as expected, while both regression checks pass. |
-| 1:10–1:50 | Progress and tool calls | The model reads the printing code and requests an edit. The controller validates each call and permits changes only in the configured scope. The model then requests the checks. |
-| 1:50–2:20 | Actual diff | In this successful run, only EACH quantity formatting changed. Stored quantities, weight formatting and pricing remain unchanged. The diff shows the exact edit. |
-| 2:20–2:50 | Independent final checks and report | A completion message does not prove success. The harness independently repeats the protected checks. Here, acceptance and both regression checks pass. The report and diff are downloadable. |
-| 2:50–3:15 | README architecture diagram | The controller manages the loop, file tools enforce permissions, and Docker isolates repository code and tests. Action, time and output limits bound the run. The model cannot edit tests or execute arbitrary shell commands. |
-| 3:15–3:30 | README and repository link | Setup was checked using a fresh clone. Manual assistance consisted of task selection, protected test preparation and a refined prompt with a file hint. No ready-made patch was supplied. |
+| Zeit | Zeigen und erklären |
+|---|---|
+| 0:00–0:25 | Stage-2-PDF, Version/Quellstand, erlaubtes Supermarket-Projekt und Standard-7B-Modell. |
+| 0:25–0:50 | Servicegebühr: zwei Module, alte Aufrufe, ungültige Werte; geschützte rote Baseline. |
+| 0:50–1:20 | Leeres UI-Aufgabenfeld, eigenen Featureprompt starten; Repositorykarte, Symbole/Imports und Git-Zustand. |
+| 1:20–1:55 | Tatsächliche Lese-/Edit-/Checkaktionen, Kontextbudget und Schritthistorie. |
+| 1:55–2:30 | Repräsentativen Abbruch und gespeicherte Sitzung öffnen; eigene Edits und verbrauchte Aktionen bleiben erhalten. |
+| 2:30–3:00 | Sichere Fortsetzung; daneben Test für Hashabweichung/unsichere Aktion zeigen, die pausiert statt zu replayen. |
+| 3:00–3:35 | Tatsächlichen Feature-Diff über mindestens zwei Module, unabhängige Feature-/Regressions-/Lintresultate zeigen. |
+| 3:35–3:55 | Zuständigkeiten, Grenzen, AI-Hilfe und ggf. CPU-Fallback/manuelle Hinweise offenlegen. |
+
+Die Aufnahme ist vom Nutzer durchzuführen. README, tests/test_stage2.py und der
+Änderungsnachweis erklären die gezeigten Teile. Die alten Nachweise unter docs/evidence/
+belegen Stage 1; Stage-2-Nachweise werden getrennt abgelegt.

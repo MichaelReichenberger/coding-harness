@@ -34,12 +34,27 @@ class RunStore:
         self.events_truncated = False
         self.events: list[dict] = []
         self.lock = threading.RLock()
+        # S2-S: Nach Prozessneustart die vorhandenen begrenzten Ereignisse öffnen.
+        events = path / "events.jsonl"
+        if events.exists():
+            if events.is_symlink() or events.stat().st_size > self.budget // 4:
+                raise ValueError("Ungültiges Ereignisprotokoll")
+            # Ein fremder inspect-Prozess kann während eines Appends lesen.
+            # Eine noch nicht abgeschlossene letzte Zeile ist kein fertiges Ereignis.
+            self.events = [
+                json.loads(line)
+                for line in events.read_text("utf-8").splitlines(keepends=True)
+                if line.endswith("\n")
+            ]
+            self.event_bytes = events.stat().st_size
+            self.events_truncated = any(e.get("kind") == "artifact_limit" for e in self.events)
 
     def event(self, kind: str, **data) -> None:
         with self.lock:
             event = {"at": datetime.now(UTC).isoformat(), "kind": kind, **data}
             line = json.dumps(event, ensure_ascii=False) + "\n"
-            if self.event_bytes + len(line.encode("utf-8")) > self.budget // 2 - 512:
+            # Vier Viertel: Ereignisse, Bericht, Diff und atomarer Session-Checkpoint.
+            if self.event_bytes + len(line.encode("utf-8")) > self.budget // 4 - 512:
                 if self.events_truncated:
                     return
                 self.events_truncated = True
@@ -51,7 +66,8 @@ class RunStore:
                 line = json.dumps(event) + "\n"
             self.event_bytes += len(line.encode("utf-8"))
             self.events.append(event)
-            with (self.path / "events.jsonl").open("a", encoding="utf-8") as stream:
+            # Keine Windows-CRLF-Erweiterung: Dateibytes entsprechen dem Bytebudget.
+            with (self.path / "events.jsonl").open("a", encoding="utf-8", newline="\n") as stream:
                 stream.write(line)
 
     def snapshot(self) -> list[dict]:
@@ -65,9 +81,10 @@ class RunStore:
         checks = value.get("checks", [])
         text_budget = max(256, (self.budget // 4 - 32768) // max(1, len(checks) * 2))
         for check in checks:
+            check["reason"], reason_shortened = clip(check.get("reason", ""), 256)
             for key in ("stdout", "stderr"):
                 check[key], shortened = clip(check.get(key, ""), text_budget)
-                check["truncated"] = check.get("truncated", False) or shortened
+                check["truncated"] = check.get("truncated", False) or shortened or reason_shortened
         data = json.dumps(value, ensure_ascii=False, indent=2)
         if len(data.encode("utf-8")) > self.budget // 4:
             # Sicherheitsreserve für kleine Budgets: Metadaten haben Vorrang vor Text.
@@ -75,7 +92,19 @@ class RunStore:
                 check["stdout"], check["stderr"], check["truncated"] = MARKER, MARKER, True
             value["report_truncated"] = True
             data = json.dumps(value, ensure_ascii=False, indent=2)
+        # Auch ungewöhnlich lange Modell-Schrittmetadaten dürfen das Budget nicht
+        # umgehen. Vollständige Schritte stehen im separat begrenzten Checkpoint.
+        while len(data.encode("utf-8")) > self.budget // 4 and value.get("steps"):
+            value["steps"].pop(0)
+            value["steps_truncated"] = True
+            data = json.dumps(value, ensure_ascii=False, indent=2)
+        if len(data.encode("utf-8")) > self.budget // 4 and value.get("pending"):
+            value["pending"] = {k: v for k, v in value["pending"].items() if k != "arguments"}
+            value["pending_details"] = "session.json"
+            data = json.dumps(value, ensure_ascii=False, indent=2)
+        if len(data.encode("utf-8")) > self.budget // 4:
+            raise ValueError("Berichtsmetadaten überschreiten Artefaktbudget")
         temporary = self.path / "report.tmp"
-        temporary.write_text(data, "utf-8")
+        temporary.write_text(data, "utf-8", newline="\n")
         temporary.replace(self.path / "report.json")
         return value

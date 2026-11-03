@@ -6,7 +6,7 @@ import json
 import threading
 
 from harness.errors import Cancelled, HarnessError
-from harness.sandbox import CHECKS, CheckResult
+from harness.sandbox import CHECKS, FEATURE_CHECKS, CheckResult
 
 
 def acceptance_evidence(result: CheckResult) -> dict:
@@ -49,7 +49,7 @@ def baseline_reproduces(results: dict[str, CheckResult]) -> bool:
     )
 
 
-def all_passed(results: dict[str, CheckResult]) -> bool:
+def all_passed(results: dict[str, CheckResult], checks=CHECKS) -> bool:
     """Fehlender Check, Timeout oder unbestätigtes Containerende verhindert Erfolg."""
     return all(
         c in results
@@ -58,8 +58,36 @@ def all_passed(results: dict[str, CheckResult]) -> bool:
         and not results[c].timed_out
         and not results[c].cancelled
         and results[c].cleanup_verified
-        for c in CHECKS
+        for c in checks
     )
+
+
+def feature_baseline_reproduces(results):
+    """S2-F: Fehlende Gebühren-API bei intakten Legacy-Kontrollen und Regressionen."""
+    if set(results) != set(FEATURE_CHECKS):
+        return False
+    result = results.get("feature", CheckResult("feature"))
+    for line in result.stdout.splitlines():
+        if line.startswith("HARNESS_FEATURE="):
+            try:
+                evidence = json.loads(line.split("=", 1)[1])
+            except ValueError:
+                return False
+            return (
+                result.status == "failed"
+                and result.exit_code == 1
+                and result.cleanup_verified
+                and not result.timed_out
+                and not result.cancelled
+                and evidence.get("positive_control") is True
+                and bool(evidence.get("feature_failures"))
+                and evidence.get("infrastructure_errors") == []
+                and all_passed(
+                    {k: v for k, v in results.items() if k != "feature"},
+                    [k for k in results if k != "feature"],
+                )
+            )
+    return False
 
 
 class Verifier:
@@ -68,12 +96,17 @@ class Verifier:
     def __init__(self, runner, store, cancel: threading.Event):
         self.runner, self.store, self.cancel = runner, store, cancel
         self.records: list[dict] = []
+        self.checks = getattr(runner, "checks", CHECKS)
+        self.before = lambda check_id, phase: None
+        self.after = lambda result, phase: None
 
     def check(self, check_id: str, phase: str) -> CheckResult:
+        self.before(check_id, phase)
         result = self.runner.run(check_id, self.cancel)
         record = {"phase": phase, **result.to_dict()}
         self.records.append(record)
         self.store.event("check", **record)
+        self.after(result, phase)
         if self.runner.poisoned:
             raise HarnessError("Containerende unbestätigt; Lauf blockiert")
         if self.cancel.is_set() or result.cancelled:
@@ -82,7 +115,7 @@ class Verifier:
 
     def suite(self, phase: str) -> dict[str, CheckResult]:
         results = {}
-        for check_id in CHECKS:
+        for check_id in self.checks:
             if self.cancel.is_set():
                 raise Cancelled("Abbruch angefordert")
             results[check_id] = self.check(check_id, phase)
@@ -91,7 +124,7 @@ class Verifier:
     def with_not_run(self) -> list[dict]:
         records = list(self.records)
         for phase in ("baseline", "final"):
-            for check_id in CHECKS:
+            for check_id in self.checks:
                 if not any(r["phase"] == phase and r["check_id"] == check_id for r in records):
                     records.append({"phase": phase, **CheckResult(check_id).to_dict()})
         return records

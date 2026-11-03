@@ -15,10 +15,14 @@ class FakeService:
         self.report = None
         self.path = None
 
-    def start(self, task, *, model_name=None):
+    def start(self, task, *, model_name=None, project="supermarket", profile="bugfix"):
         self.started += 1
         self.active = True
         self.task, self.model_name = task, model_name
+        self.project, self.profile = project, profile
+
+    def sessions(self):
+        return []
 
     def cancel(self):
         self.cancelled = True
@@ -111,6 +115,21 @@ def test_custom_prompt_is_sent_without_demo_task(ui):
     button(test, "Lauf starten").click().run()
     assert not test.exception and fake.task == task
     assert fake.model_name == "my-installed-model:latest"
+    assert fake.project == "supermarket" and fake.profile == "bugfix"
+
+
+def test_feature_profile_and_saved_session_controls(ui, monkeypatch):
+    test, fake = ui
+    monkeypatch.setattr(fake, "sessions", lambda: [{"run_id": "saved", "state": "cancelled"}])
+    opened = []
+    monkeypatch.setattr(fake, "open", lambda run_id: opened.append(run_id), raising=False)
+    test.run()
+    button(test, "Sitzung öffnen").click().run()
+    assert opened == ["saved"] and not test.exception
+    next(box for box in test.selectbox if box.label == "Aufgabenart").set_value("feature").run()
+    test.text_area[0].set_value("Optionale Servicegebühr ergänzen.").run()
+    button(test, "Lauf starten").click().run()
+    assert fake.profile == "feature"
 
 
 def test_passed_checks_explain_limited_verification_scope(ui, tmp_path):

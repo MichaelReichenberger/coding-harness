@@ -50,7 +50,11 @@ class EditArgs(StrictModel):
 class CheckArgs(StrictModel):
     """Nur bekannte Check-Namen; keine freien Programme oder Shell-Argumente."""
 
-    check_id: Literal["acceptance", "regression_core", "regression_pricing"]
+    check_id: Literal["acceptance", "regression_core", "regression_pricing", "feature", "lint"]
+
+
+class NavigationArgs(StrictModel):
+    query: str = Field(default="", max_length=200)
 
 
 class FinishArgs(StrictModel):
@@ -60,6 +64,10 @@ class FinishArgs(StrictModel):
 
 
 REGISTRY = {
+    "inspect_repository": (
+        NavigationArgs,
+        "Inspect Python modules, symbols, imports, relevant files and Git state. query selects relevant symbols.",
+    ),
     "list_files": (
         ListArgs,
         "List repository-relative files (at most 200). path is a DIRECTORY; use '.' for the repository root.",
@@ -120,11 +128,13 @@ class RepositoryTools:
         check: Callable,
         cancel: threading.Event,
         gate: threading.RLock | None = None,
+        navigate: Callable | None = None,
     ):
         self.root = root.resolve(strict=True)
         self.editable = set(editable)
         self.limits, self.check, self.cancel = limits, check, cancel
         self.gate = gate or threading.RLock()
+        self.navigate = navigate
 
     def path(self, value: str, *, directory=False) -> Path:
         # Zweistufig: erst gefährliche Schreibweisen verwerfen, dann den realen
@@ -212,6 +222,10 @@ class RepositoryTools:
                 raise Cancelled("Abbruch angefordert")
             if name == "finish":
                 return {"finish": True, "summary": args.summary}
+            if name == "inspect_repository":
+                if self.navigate is None:
+                    raise ToolError("Navigation ist in dieser Testumgebung nicht eingerichtet")
+                return self.navigate(args.query)
             if name == "run_check":
                 return self.check(args.check_id).to_dict()
             if name == "list_files":

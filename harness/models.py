@@ -52,7 +52,7 @@ class OllamaModelClient:
     def __init__(self, settings: Settings):
         self.settings, self.name = settings, settings.model
 
-    async def _request(self, messages, tools, cancel):
+    def _payload(self, messages, tools):
         # Die Kopie verhindert, dass Werkzeugbeschreibungen bei jedem Aufruf
         # erneut an den gespeicherten Systemprompt angehängt werden.
         payload = {
@@ -61,6 +61,8 @@ class OllamaModelClient:
             "stream": False,
             "options": {"temperature": 0, "num_ctx": 16384, "num_predict": 4096},
         }
+        if self.settings.num_gpu is not None:
+            payload["options"]["num_gpu"] = self.settings.num_gpu
         alternatives = []
         for tool in tools:
             function = tool["function"]
@@ -80,6 +82,16 @@ class OllamaModelClient:
             "\nReturn one JSON object with name and arguments for the next tool. No Markdown. "
             "Use finish when done. Tool definitions: " + json.dumps(tools)
         )
+        return payload
+
+    def request_size(self, messages):
+        """S2-C: Auch Werkzeugdefinitionen und Transport-Escaping zählen zum Budget."""
+        from harness.repository import tool_schemas
+
+        return len(json.dumps(self._payload(messages, tool_schemas())).encode("utf-8"))
+
+    async def _request(self, messages, tools, cancel):
+        payload = self._payload(messages, tools)
 
         async def request():
             async with httpx.AsyncClient(

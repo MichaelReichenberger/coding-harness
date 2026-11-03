@@ -96,3 +96,16 @@ def test_schema_protocol_is_explicit_and_preserves_raw_history(monkeypatch):
     )
     assert captured[0]["format"]["oneOf"] and "tools" not in captured[0]
     assert reply == {"name": "list_files", "arguments": {}}
+
+
+def test_cpu_override_is_explicit_and_counted_in_request_size():
+    messages = [{"role": "system", "content": "Trusted instructions"}]
+    original = json.loads(json.dumps(messages))
+    client = OllamaModelClient(Settings(num_gpu=0))
+    from harness.repository import tool_schemas
+
+    payload = client._payload(messages, tool_schemas())
+    assert payload["options"]["num_gpu"] == 0
+    assert client.request_size(messages) == len(json.dumps(payload).encode("utf-8"))
+    assert messages == original
+    assert "num_gpu" not in OllamaModelClient(Settings())._payload(messages, [])["options"]

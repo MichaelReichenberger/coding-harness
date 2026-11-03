@@ -27,6 +27,13 @@ CHECKS = {
     "regression_pricing": ["python", "-I", "/trusted/entry.py", "regression_pricing"],
 }
 
+FEATURE_CHECKS = {
+    "feature": ["python", "-I", "/trusted/entry.py", "feature"],
+    "regression_core": CHECKS["regression_core"],
+    "regression_pricing": CHECKS["regression_pricing"],
+    "lint": ["python", "-I", "/trusted/entry.py", "lint"],
+}
+
 
 @dataclass
 class CheckResult:

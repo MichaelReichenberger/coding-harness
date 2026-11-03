@@ -6,7 +6,7 @@ import argparse
 import json
 import sys
 
-from harness.config import ROOT, load_settings, load_target
+from harness.config import PROFILES, PROJECTS, ROOT, load_settings, load_target
 from harness.doctor import doctor
 from harness.process import capture
 from harness.service import RunService
@@ -24,9 +24,20 @@ def main() -> int:
     setup.add_argument("--build", action="store_true")
     run = sub.add_parser("run", help="Neuer Lauf vom fixierten Commit")
     run.add_argument("--task", required=True, help="Eigener Bugfix-/Featureauftrag")
-    sub.add_parser("baseline", help="Nur unveränderten Ausgangszustand prüfen")
+    baseline_parser = sub.add_parser("baseline", help="Nur unveränderten Ausgangszustand prüfen")
+    for command in (run, baseline_parser):
+        command.add_argument("--project", choices=PROJECTS, default="supermarket")
+        command.add_argument("--profile", choices=PROFILES, default="bugfix")
+    sub.add_parser("projects", help="Freigegebene Projekte anzeigen")
+    sub.add_parser("sessions", help="Gespeicherte Sitzungen anzeigen")
+    for name in ("inspect", "resume", "cancel"):
+        command = sub.add_parser(name, help="Sitzung " + name)
+        command.add_argument("run_id")
     args = parser.parse_args()
     settings = load_settings()
+    if args.command == "projects":
+        print(json.dumps(PROJECTS, indent=2))
+        return 0
     if args.command == "doctor":
         result = doctor(settings)
         print(json.dumps(result, indent=2, ensure_ascii=False))
@@ -44,8 +55,26 @@ def main() -> int:
             return 0 if result.exit_code == 0 and not result.timed_out else 2
         return 0
     service = RunService(settings)
+    if args.command == "sessions":
+        print(json.dumps(service.sessions(), indent=2, ensure_ascii=False))
+        return 0
+    if args.command == "inspect":
+        print(json.dumps(service.open(args.run_id), indent=2, ensure_ascii=False))
+        return 0
+    if args.command == "cancel":
+        service.cancel(args.run_id)
+        print("Abbruch angefordert:", args.run_id)
+        return 0
     baseline = args.command == "baseline"
-    service.start("Ausgangszustand prüfen" if baseline else args.task, baseline_only=baseline)
+    if args.command == "resume":
+        service.resume(args.run_id)
+    else:
+        service.start(
+            "Ausgangszustand prüfen" if baseline else args.task,
+            baseline_only=baseline,
+            project=args.project,
+            profile=args.profile,
+        )
     print("Lauf:", service.workspace.run_id, flush=True)
     seen = 0
     try:
@@ -77,7 +106,16 @@ def main() -> int:
         )
     )
     # baseline bestätigt die dokumentierte rote Akzeptanz bei grünen Regressionen.
-    ok = report.get("baseline_bug_reproduced", False) if baseline else report["success"]
+    ok = (
+        report.get(
+            "baseline_feature_reproduced"
+            if args.profile == "feature"
+            else "baseline_bug_reproduced",
+            False,
+        )
+        if baseline
+        else report["success"]
+    )
     return 0 if ok else 2
 
 
