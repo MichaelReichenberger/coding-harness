@@ -7,6 +7,7 @@ fehlende Bibliotheken/Importe dürfen niemals als fachlicher Fehler gelten.
 
 import json
 import math
+import traceback
 
 from model_objects import Product, ProductUnit, SpecialOfferType
 from receipt import Receipt
@@ -37,10 +38,11 @@ def main():
     def case(name, operation):
         try:
             passed = bool(operation())
-        except (TypeError, ValueError, AttributeError) as exc:
+        except (TypeError, ValueError, AttributeError, OverflowError) as exc:
             # API fehlt oder fachlicher Pfad ist noch nicht implementiert.
             passed = False
             print(f"{name}: {type(exc).__name__}: {exc}")
+            traceback.print_exc(limit=-3)
         except Exception as exc:
             errors.append(f"{name}: {type(exc).__name__}: {exc}")
             passed = False
@@ -56,6 +58,25 @@ def main():
     case("fee_zero", lambda: math.isclose(purchase(0).total_price(), 4.0))
     case("fee_with_discount", lambda: math.isclose(purchase(1.5, discount=True).total_price(), 5.1))
 
+    # Der Warenzwischensaldo muss auch neben sehr grossen Gebuehren erhalten bleiben.
+    def preserves_subtotal(fee, discount):
+        expected = purchase(0, discount=discount).total_price()
+        actual = purchase(fee, discount=discount).total_price() - fee
+        print(f"subtotal expected={expected!r} actual={actual!r}")
+        return math.isclose(actual, expected)
+
+    for exponent in (30, 400):
+        fee = 10**exponent
+        case(
+            f"large_fee_receipt_{exponent}",
+            lambda fee=fee: Receipt(service_fee=fee).total_price() == fee,
+        )
+        for discount in (False, True):
+            case(
+                f"large_fee_checkout_{exponent}_{discount}",
+                lambda fee=fee, discount=discount: preserves_subtotal(fee, discount),
+            )
+
     def invalid(value, direct):
         try:
             Receipt(service_fee=value) if direct else purchase(value)
@@ -63,7 +84,9 @@ def main():
             return bool(str(exc).strip())
         return False
 
-    for index, value in enumerate((-1, float("nan"), float("inf"), "1.5", None, True)):
+    for index, value in enumerate(
+        (-1, float("nan"), float("inf"), "1.5", None, True, False, -float("inf"), -(10**400))
+    ):
         for direct in (False, True):
             case(f"invalid_{index}_{direct}", lambda v=value, d=direct: invalid(v, d))
     evidence = {

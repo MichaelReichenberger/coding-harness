@@ -1,4 +1,4 @@
-# Python 3.12: festgelegte Laufzeit-, pytest- und Ruff-Abhängigkeiten.
+# Festgelegte Laufzeit-, pytest- und Ruff-Abhängigkeiten. Getestet mit Python 3.13.2.
 altair==6.3.0
 annotated-types==0.8.0
 anyio==4.15.1

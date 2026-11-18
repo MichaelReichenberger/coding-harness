@@ -1,5 +1,5 @@
 # Optional nach config.local.toml kopieren. Umgebungsvariablen haben Vorrang.
-# Modellname ist frei wählbar; das Modell muss in Ollama installiert sein.
+# Das Modell muss unter dem eingetragenen Namen in Ollama installiert sein.
 ollama_base_url = "http://127.0.0.1:11434"
 model = "qwen2.5-coder:7b"
 # Optional: num_gpu = 0 erzwingt CPU nur für diese Modellanfragen, z.B. bei CUDA-Fehlern.

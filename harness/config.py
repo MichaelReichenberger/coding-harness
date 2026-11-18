@@ -112,5 +112,6 @@ FEATURE_CRITERIA = (
     "Optional service_fee on Teller.checks_out_articles_from and Receipt construction; "
     "default zero preserves existing callers. Add the fee once after existing discounts. "
     "Reject negative, non-finite and non-numeric fees (including bool) with ValueError. "
-    "Keep quantities and existing pricing rules unchanged."
+    "Accept non-negative Python integers of any size, including 10**400, without overflow "
+    "or loss of the item subtotal, including fractional amounts after discounts. Keep quantities and existing pricing rules unchanged."
 )

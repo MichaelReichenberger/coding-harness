@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import threading
 
-from harness.errors import Cancelled, HarnessError
 from harness.sandbox import CHECKS, FEATURE_CHECKS, CheckResult
 
 
@@ -37,15 +36,7 @@ def baseline_reproduces(results: dict[str, CheckResult]) -> bool:
         and evidence.get("positive_control") is True
         and not evidence.get("infrastructure_errors", ["missing"])
         and set(evidence.get("business_failures", [])) == {"each_2", "each_3", "each_5"}
-        and all(
-            results.get(c, CheckResult(c)).status == "passed"
-            and results[c].exit_code == 0
-            and results[c].cleanup_verified
-            and not results[c].timed_out
-            and not results[c].cancelled
-            for c in CHECKS
-            if c != "acceptance"
-        )
+        and all_passed(results, [check_id for check_id in CHECKS if check_id != "acceptance"])
     )
 
 
@@ -83,8 +74,7 @@ def feature_baseline_reproduces(results):
                 and bool(evidence.get("feature_failures"))
                 and evidence.get("infrastructure_errors") == []
                 and all_passed(
-                    {k: v for k, v in results.items() if k != "feature"},
-                    [k for k in results if k != "feature"],
+                    results, [check_id for check_id in FEATURE_CHECKS if check_id != "feature"]
                 )
             )
     return False
@@ -97,29 +87,13 @@ class Verifier:
         self.runner, self.store, self.cancel = runner, store, cancel
         self.records: list[dict] = []
         self.checks = getattr(runner, "checks", CHECKS)
-        self.before = lambda check_id, phase: None
-        self.after = lambda result, phase: None
 
     def check(self, check_id: str, phase: str) -> CheckResult:
-        self.before(check_id, phase)
         result = self.runner.run(check_id, self.cancel)
         record = {"phase": phase, **result.to_dict()}
         self.records.append(record)
         self.store.event("check", **record)
-        self.after(result, phase)
-        if self.runner.poisoned:
-            raise HarnessError("Containerende unbestätigt; Lauf blockiert")
-        if self.cancel.is_set() or result.cancelled:
-            raise Cancelled("Abbruch während der Prüfung")
         return result
-
-    def suite(self, phase: str) -> dict[str, CheckResult]:
-        results = {}
-        for check_id in self.checks:
-            if self.cancel.is_set():
-                raise Cancelled("Abbruch angefordert")
-            results[check_id] = self.check(check_id, phase)
-        return results
 
     def with_not_run(self) -> list[dict]:
         records = list(self.records)

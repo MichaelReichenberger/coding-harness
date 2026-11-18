@@ -1,0 +1,35 @@
+{
+  "run_id": "20261116T164810Z-6e87ce83",
+  "cancelled_state": "cancelled",
+  "checkpoint_pending": null,
+  "counters_at_cancel": {
+    "actions": 12,
+    "rounds": 13,
+    "requests": 13
+  },
+  "own_edits_preserved_on_reopen": true,
+  "final_state": "passed",
+  "final_actions": 20,
+  "final_requests": 21,
+  "gpu": {
+    "name": "qwen3.8:27b",
+    "model": "qwen3.8:27b",
+    "size": 17361996347,
+    "digest": "aaee06c39dcf2437cde036998d960e1fc1494b8191be7cc9657d01e509097813",
+    "details": {
+      "parent_model": "",
+      "format": "gguf",
+      "family": "qwen35",
+      "families": [
+        "qwen35"
+      ],
+      "parameter_size": "27.3B",
+      "quantization_level": "Q4_K_M"
+    },
+    "expires_at": "2026-11-16T17:52:18.9313668+01:00",
+    "size_vram": 17361996347,
+    "context_length": 16384,
+    "runner": "llamacpp"
+  },
+  "manual_help": "Prepared API requirements and protected checks, added large-int precision cases after reviewing prior attempts, clarified that protected tests are outside the repository and explicitly permitted fractions.Fraction as design guidance for an exact rational total, then cancelled after first edit, reopened with a new RunService, and resumed. No target code edited manually or supplied to the model."
+}

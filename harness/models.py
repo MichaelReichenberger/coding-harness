@@ -59,6 +59,8 @@ class OllamaModelClient:
             "model": self.name,
             "messages": copy.deepcopy(messages),
             "stream": False,
+            # Das Protokoll erwartet genau eine JSON-Werkzeugaktion pro Anfrage.
+            "think": False,
             "options": {"temperature": 0, "num_ctx": 16384, "num_predict": 4096},
         }
         if self.settings.num_gpu is not None:

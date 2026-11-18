@@ -42,7 +42,7 @@ def main():
         st.code(target.commit, language=None)
         st.write("Änderungsbereich: " + ", ".join(target.editable))
         model_name = st.text_input("Ollama-Modell", value=settings.model, disabled=service.active)
-        st.caption("Name eines installierten Modells; kein automatischer Download.")
+        st.caption("Name eines installierten Modells. Kein automatischer Download.")
         if st.button("Umgebung prüfen", disabled=service.active):
             with st.spinner("Docker, Referenz und Ollama prüfen …"):
                 st.session_state["diagnosis"] = doctor(
@@ -65,7 +65,7 @@ def main():
         placeholder="Beschreibe den Fehler und das gewünschte Verhalten.",
     )
     st.caption(
-        "bugfix prüft Stückmengen; feature prüft die optionale Servicegebühr und Syntaxlint. "
+        "bugfix prüft Stückmengen. feature prüft die optionale Servicegebühr und Syntaxlint. "
         "Für andere Anforderungen braucht es passende geschützte Tests. Siehe docs/task.md."
     )
     with st.expander("Gespeicherte Sitzungen öffnen und fortsetzen"):
@@ -73,7 +73,13 @@ def main():
         ids = [item["run_id"] for item in sessions]
         if ids:
             selected = st.selectbox("Sitzung", ids, disabled=service.active)
-            st.json(next(item for item in sessions if item["run_id"] == selected))
+            selected_session = next(item for item in sessions if item["run_id"] == selected)
+            completed = selected_session["state"] in {"passed", "baseline_checked"}
+            st.json(selected_session)
+            if completed:
+                st.caption(
+                    "Diese Sitzung ist abgeschlossen. Du kannst den Diff und die Checks öffnen."
+                )
             opened, resumed = st.columns(2)
             if opened.button("Sitzung öffnen", disabled=service.active):
                 try:
@@ -81,7 +87,7 @@ def main():
                     st.rerun()
                 except Exception as exc:
                     st.error(str(exc))
-            if resumed.button("Sicher fortsetzen", disabled=service.active):
+            if resumed.button("Sicher fortsetzen", disabled=service.active or completed):
                 try:
                     service.resume(selected)
                     st.rerun()
@@ -135,6 +141,8 @@ def main():
         with history:
             for event in snapshot["events"]:
                 title = f"{event['at'][11:19]} · {event['kind']} · {event.get('name', event.get('state', ''))}"
+                if event["kind"] == "context_shortened":
+                    title = f"{event['at'][11:19]} · Kontext gekürzt · {event['bytes']} Bytes"
                 with st.expander(title):
                     st.json(event)
         with changes:

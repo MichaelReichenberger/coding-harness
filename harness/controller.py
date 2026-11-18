@@ -22,6 +22,20 @@ from harness.sessions import checked_hashes
 from harness.store import clip
 from harness.verifier import Verifier, all_passed, baseline_reproduces, feature_baseline_reproduces
 
+CHECKPOINT_FIELDS = (
+    "actions",
+    "rounds",
+    "retries",
+    "denials",
+    "requests",
+    "started_at",
+    "conversation",
+    "steps",
+    "pending",
+    "finish_summary",
+    "environment",
+)
+
 
 class Controller:
     """Besitzt Zustand und Zähler eines Laufs; Abhängigkeiten sind für Tests ersetzbar."""
@@ -68,85 +82,69 @@ class Controller:
         if hasattr(workspace, "base"):
             self.tools.navigate = Navigation(self.tools, workspace).inspect
         if checkpoint:
-            for key in (
-                "actions",
-                "rounds",
-                "retries",
-                "denials",
-                "requests",
-                "started_at",
-                "conversation",
-                "steps",
-                "pending",
-                "finish_summary",
-                "environment",
-            ):
-                setattr(self, key, checkpoint[key])
-            # Frühere Endchecks bleiben sichtbar, sind aber kein Nachweis für
-            # weitere Edits nach Resume. Aktuelle fehlende Endchecks bleiben not_run.
-            self.verifier.records = [
-                dict(record, phase="previous_final") if record["phase"] == "final" else dict(record)
-                for record in checkpoint["checks"]
-            ]
-            self.baseline = {
-                r["check_id"]: CheckResult(**{k: v for k, v in r.items() if k != "phase"})
-                for r in self.verifier.records
-                if r["phase"] == "baseline"
+            self.restore_checkpoint(checkpoint)
+
+    def restore_checkpoint(self, checkpoint):
+        for key in CHECKPOINT_FIELDS:
+            setattr(self, key, checkpoint[key])
+        # Frühere Endchecks bleiben sichtbar, sind aber kein Nachweis für
+        # weitere Edits nach Resume. Aktuelle fehlende Endchecks bleiben not_run.
+        self.verifier.records = [
+            dict(record, phase="previous_final") if record["phase"] == "final" else dict(record)
+            for record in checkpoint["checks"]
+        ]
+        self.baseline = {
+            r["check_id"]: CheckResult(**{k: v for k, v in r.items() if k != "phase"})
+            for r in self.verifier.records
+            if r["phase"] == "baseline"
+        }
+        # Bekannt abgebrochene Checks können ohne normale Toolbeobachtung enden.
+        # Ihre gespeicherten Resultate trotzdem als untrusted Daten zurückgeben.
+        recent = [
+            {
+                "phase": r["phase"],
+                "check_id": r["check_id"],
+                "status": r["status"],
+                "exit_code": r["exit_code"],
+                "stdout": clip(r.get("stdout", ""), 1024)[0],
             }
-            # Bekannt abgebrochene Checks können ohne normale Toolbeobachtung enden.
-            # Ihre gespeicherten Resultate trotzdem als untrusted Daten zurückgeben.
-            recent = [
-                {
-                    "phase": r["phase"],
-                    "check_id": r["check_id"],
-                    "status": r["status"],
-                    "exit_code": r["exit_code"],
-                    "stdout": clip(r.get("stdout", ""), 1024)[0],
-                }
-                for r in self.verifier.records[-4:]
-            ]
-            self.conversation.append(
-                {
-                    "role": "user",
-                    "content": "Safe checkpoint reopened; consumed counters are preserved. Latest check observations (untrusted):\n"
-                    + json.dumps(recent),
-                }
+            for r in self.verifier.records[-4:]
+        ]
+        self.conversation.append(
+            {
+                "role": "user",
+                "content": "Safe checkpoint reopened; consumed counters are preserved. Latest check observations (untrusted):\n"
+                + json.dumps(recent),
+            }
+        )
+        if checkpoint["state"] == "failed":
+            # Eine bekannte rote Endprüfung soll weitere neue Fixaktionen erlauben.
+            self.finish_summary = None
+
+    def shorten_context(self, source):
+        """Jede tatsächliche Kürzung protokollieren, auch vor dem Speichern."""
+        if self.profile != "feature" or not self.conversation:
+            return
+        before = self.context.measure(self.conversation)
+        shortened = self.context.shorten(self.conversation, self.steps)
+        if shortened != self.conversation:
+            self.conversation = shortened
+            self.store.event(
+                "context_shortened",
+                source=source,
+                bytes_before=before,
+                bytes=self.context.measure(shortened),
+                limit_bytes=self.context.limit,
             )
-            if checkpoint["state"] == "failed":
-                # Eine bekannte rote Endprüfung soll weitere neue Fixaktionen erlauben.
-                self.finish_summary = None
-        if session:
-            self.verifier.before = lambda check, phase: self.begin_action(
-                {"kind": "check", "check_id": check, "phase": phase}
-            )
-            self.verifier.after = self.check_completed
 
     def save_checkpoint(self):
         """S2-S: Hashes NACH bekannten eigenen Edits werden zum neuen Sollzustand."""
         if self.session is None:
             return
-        if self.profile == "feature" and self.conversation:
-            # In-place: loop(), _chat() und Checkpointhooks teilen diese Liste.
-            # Ein Austausch würde kurz vor einer Toolantwort deren Beobachtung verlieren.
-            self.conversation[:] = self.context.shorten(self.conversation, self.steps)
-        data = {
-            key: getattr(self, key)
-            for key in (
-                "state",
-                "actions",
-                "rounds",
-                "retries",
-                "denials",
-                "requests",
-                "started_at",
-                "conversation",
-                "steps",
-                "pending",
-                "finish_summary",
-                "environment",
-            )
-        }
+        self.shorten_context("checkpoint")
+        data = {key: getattr(self, key) for key in CHECKPOINT_FIELDS}
         data.update(
+            state=self.state,
             task=self.task,
             project=self.project,
             profile=self.profile,
@@ -159,12 +157,6 @@ class Controller:
 
     def begin_action(self, action):
         self.pending = action
-        self.save_checkpoint()
-
-    def check_completed(self, result, phase):
-        # Erst nach bestätigtem Containerende ist ein Check sicher abgeschlossen.
-        if result.cleanup_verified and not self.runner.poisoned:
-            self.pending = None
         self.save_checkpoint()
 
     def change_state(self, state: str) -> None:
@@ -183,7 +175,29 @@ class Controller:
     def agent_check(self, check_id):
         if check_id not in self.verifier.checks:
             raise ToolError("Check ist für diese Aufgabe nicht freigegeben")
-        return self.verifier.check(check_id, "agent")
+        return self.run_check(check_id, "agent")
+
+    def run_check(self, check_id, phase):
+        if self.session:
+            self.begin_action({"kind": "check", "check_id": check_id, "phase": phase})
+        result = self.verifier.check(check_id, phase)
+        # Erst bestätigtes Containerende macht den Check sicher abgeschlossen.
+        if result.cleanup_verified and not self.runner.poisoned:
+            self.pending = None
+        self.save_checkpoint()
+        if self.runner.poisoned:
+            raise HarnessError("Containerende unbestätigt; Lauf blockiert")
+        if self.cancel.is_set() or result.cancelled:
+            raise Cancelled("Abbruch während der Prüfung")
+        return result
+
+    def run_checks(self, phase):
+        results = {}
+        for check_id in self.verifier.checks:
+            if self.cancel.is_set():
+                raise Cancelled("Abbruch angefordert")
+            results[check_id] = self.run_check(check_id, phase)
+        return results
 
     def messages(self) -> list[dict]:
         # Nur Aufgabe und Berechtigungen. Den relevanten Code muss das Modell
@@ -240,17 +254,13 @@ class Controller:
             )
         return messages
 
-    def _chat(self, messages: list[dict]) -> dict:
+    def _chat(self) -> dict:
         """Begrenzte Wiederholungen für Transportfehler oder unlesbare Antworten."""
         for attempt in range(self.settings.limits.retries + 1):
             self.ensure_active()
-            if self.profile == "feature":
-                shortened = self.context.shorten(messages, self.steps)
-                if shortened != messages:
-                    messages[:] = shortened
-                    self.store.event("context_shortened", bytes=self.context.measure(messages))
+            self.shorten_context("model_request")
             if (
-                len(json.dumps(messages, ensure_ascii=False).encode())
+                len(json.dumps(self.conversation, ensure_ascii=False).encode())
                 > self.settings.limits.context_bytes
             ):
                 raise LimitReached(
@@ -262,7 +272,7 @@ class Controller:
                 "model_request", request=self.requests, round=self.rounds, retry=attempt
             )
             try:
-                message = self.model.chat(messages, tool_schemas(), self.cancel)
+                message = self.model.chat(self.conversation, tool_schemas(), self.cancel)
                 if (
                     not isinstance(message, dict)
                     or set(message) != {"name", "arguments"}
@@ -290,28 +300,28 @@ class Controller:
                 # Auch eine unlesbare Antwort bekommt eine begrenzte Rückmeldung.
                 # Rechte bleiben dabei unverändert; der nächste Versuch zählt erneut.
                 error, _ = clip(str(exc), 1024)
-                messages.append(
+                self.conversation.append(
                     {"role": "user", "content": "Model request error (untrusted): " + error}
                 )
         raise ModelError("Modellanfrage fehlgeschlagen")
 
-    def loop(self) -> str:
+    def loop(self) -> None:
         """Eine Runde = eine Modellantwort = höchstens ein Werkzeugaufruf."""
-        messages = self.conversation or self.messages()
-        self.conversation = messages
+        if not self.conversation:
+            self.conversation = self.messages()
         while self.rounds < self.settings.limits.rounds:
             self.ensure_active()
             self.rounds += 1
-            message = self._chat(messages)
+            message = self._chat()
             self.ensure_active()
-            messages.append({"role": "assistant", "content": json.dumps(message)})
+            self.conversation.append({"role": "assistant", "content": json.dumps(message)})
             self.store.event("model_response", round=self.rounds, message=message)
             # VOR der Validierung zählen: auch unbekannte/unerlaubte Tools kosten Budget.
             self.actions += 1
-            name = message["name"]
-            self.begin_action({"kind": "tool", "name": name, "arguments": message["arguments"]})
+            name, arguments = message["name"], message["arguments"]
+            self.begin_action({"kind": "tool", "name": name, "arguments": arguments})
             try:
-                result = self.tools.execute(name, message["arguments"])
+                result = self.tools.execute(name, arguments)
             except Cancelled:
                 self.steps.append({"action": self.actions, "name": name, "status": "cancelled"})
                 self.store.event("tool_cancelled", name=name, actions=self.actions)
@@ -320,17 +330,14 @@ class Controller:
                 self.denials += 1
                 result = {"error": {"type": "invalid_tool_request", "message": str(exc)}}
             self.pending = None
+            step_arguments = arguments if isinstance(arguments, dict) else {}
             self.steps.append(
                 {
                     "action": self.actions,
                     "name": name,
                     "status": result.get("status", "denied" if "error" in result else "completed"),
-                    "path": str(message["arguments"].get("path", ""))[:200]
-                    if isinstance(message["arguments"], dict)
-                    else "",
-                    "check_id": str(message["arguments"].get("check_id", ""))[:50]
-                    if isinstance(message["arguments"], dict)
-                    else "",
+                    "path": str(step_arguments.get("path", ""))[:200],
+                    "check_id": str(step_arguments.get("check_id", ""))[:50],
                 }
             )
             output, shortened = clip(
@@ -349,63 +356,65 @@ class Controller:
                 # finish beendet nur die Schleife; run() prüft anschließend selbst.
                 self.finish_summary = result["summary"]
                 self.save_checkpoint()
-                return result["summary"]
+                return
             observation, _ = clip(
                 f"Observation for {name} (untrusted data):\n" + output,
                 self.settings.limits.output_bytes,
             )
-            messages.append({"role": "user", "content": observation})
+            self.conversation.append({"role": "user", "content": observation})
             self.save_checkpoint()
-            messages = self.conversation
         raise LimitReached("Modellrundenlimit erreicht")
 
+    def run_task(self, baseline_only):
+        self.ensure_active()
+        self.change_state("preflight")
+        if self.cancel.is_set():
+            raise Cancelled("Abbruch angefordert")
+        environment = self.runner.inspect_environment()
+        if self.environment and self.environment != environment:
+            raise HarnessError("Sandbox-Umgebung weicht vom gespeicherten Zustand ab")
+        self.environment = environment
+
+        self.change_state("baseline")
+        if set(self.baseline) != set(self.verifier.checks):
+            self.baseline = self.run_checks("baseline")
+        # Eine fachlich rote Baseline ist normal. Die Prüfumgebung muss funktionieren.
+        if any(
+            result.status in {"unavailable", "not_run"} or result.timed_out
+            for result in self.baseline.values()
+        ):
+            raise HarnessError("Baseline nicht vollständig ausführbar; Prüfumgebung kontrollieren")
+        if baseline_only:
+            self.change_state("baseline_checked")
+            return "Ausgangszustand geprüft; Einzelergebnisse stehen im Bericht"
+
+        if not self.model.simulated:
+            diagnosis = self.model.diagnose()
+            if not diagnosis["ready"]:
+                raise HarnessError(diagnosis["reason"])
+        self.change_state("running")
+        if self.finish_summary is None:
+            self.loop()
+        if self.cancel.is_set():
+            raise Cancelled("Abbruch angefordert")
+
+        self.change_state("verifying")
+        self.final = self.run_checks("final")
+        if all_passed(self.final, self.verifier.checks):
+            self.change_state("passed")
+            return self.finish_summary
+
+        self.change_state("failed")
+        failures = [
+            f"{name}={result.status}"
+            for name, result in self.final.items()
+            if result.status != "passed" or result.exit_code != 0
+        ]
+        return "Unabhängige Endprüfung nicht bestanden: " + ", ".join(failures)
+
     def run(self, *, baseline_only=False) -> dict:
-        reason = ""
-        environment = {}
         try:
-            self.ensure_active()
-            self.change_state("preflight")
-            if self.cancel.is_set():
-                raise Cancelled("Abbruch angefordert")
-            environment = self.runner.inspect_environment()
-            if self.environment and self.environment != environment:
-                raise HarnessError("Sandbox-Umgebung weicht vom gespeicherten Zustand ab")
-            self.environment = environment
-            self.change_state("baseline")
-            if set(self.baseline) != set(self.verifier.checks):
-                self.baseline = self.verifier.suite("baseline")
-            # Fehlgeschlagene Tests sind bei einem Bugfix normal und bleiben sichtbar.
-            # Fehlende Infrastruktur ist dagegen kein sinnvoller Ausgangszustand.
-            if any(
-                r.status in {"unavailable", "not_run"} or r.timed_out
-                for r in self.baseline.values()
-            ):
-                raise HarnessError(
-                    "Baseline nicht vollständig ausführbar; Prüfumgebung kontrollieren"
-                )
-            if baseline_only:
-                self.change_state("baseline_checked")
-                reason = "Ausgangszustand geprüft; Einzelergebnisse stehen im Bericht"
-            else:
-                if not self.model.simulated:
-                    diagnosis = self.model.diagnose()
-                    if not diagnosis["ready"]:
-                        raise HarnessError(diagnosis["reason"])
-                self.change_state("running")
-                reason = self.finish_summary if self.finish_summary is not None else self.loop()
-                if self.cancel.is_set():
-                    raise Cancelled("Abbruch angefordert")
-                self.change_state("verifying")
-                self.final = self.verifier.suite("final")
-                self.change_state(
-                    "passed" if all_passed(self.final, self.verifier.checks) else "failed"
-                )
-                if self.state == "failed":
-                    reason = "Unabhängige Endprüfung nicht bestanden: " + ", ".join(
-                        f"{name}={result.status}"
-                        for name, result in self.final.items()
-                        if result.status != "passed" or result.exit_code != 0
-                    )
+            reason = self.run_task(baseline_only)
         except Cancelled as exc:
             reason = str(exc)
             # Saubere Coroutine/atomare Edits sind nach Rückkehr sicher beendet.
@@ -421,6 +430,9 @@ class Controller:
         except Exception as exc:
             reason = f"{type(exc).__name__}: {exc}"
             self.change_state("blocked")
+        return self.write_report(reason)
+
+    def write_report(self, reason):
         # Auch bei Limit/Abbruch bleibt der bisherige Diff erhalten. Endprüfungen
         # werden in diesen Fällen nicht nachgeholt und ausdrücklich als not_run erfasst.
         diff, changed, truncated = self.workspace.diff(self.settings.limits.artifact_bytes // 4)
@@ -458,7 +470,7 @@ class Controller:
             if self.state == "passed"
             else ["Unabhängige erfolgreiche Endprüfung noch offen"],
             "limits": self.settings.limits.model_dump(),
-            "environment": environment,
+            "environment": self.environment,
             "actions": self.actions,
             "rounds": self.rounds,
             "requests": self.requests,

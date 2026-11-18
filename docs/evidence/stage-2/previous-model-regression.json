@@ -1,0 +1,20 @@
+{
+  "check_id": "feature",
+  "status": "failed",
+  "command": [
+    "python",
+    "-I",
+    "/trusted/entry.py",
+    "feature"
+  ],
+  "exit_code": 1,
+  "stdout": "PASS legacy\nPASS legacy_receipt\nPASS fee_checkout\nPASS fee_receipt\nPASS fee_zero\nPASS fee_with_discount\nPASS large_fee_receipt_30\nsubtotal expected=4.0 actual=0.0\nFAIL large_fee_checkout_30_False\nsubtotal expected=3.6 actual=0.0\nFAIL large_fee_checkout_30_True\nPASS large_fee_receipt_400\nsubtotal expected=4.0 actual=4\nPASS large_fee_checkout_400_False\nsubtotal expected=3.6 actual=3\nFAIL large_fee_checkout_400_True\nPASS invalid_0_False\nPASS invalid_0_True\nPASS invalid_1_False\nPASS invalid_1_True\nPASS invalid_2_False\nPASS invalid_2_True\nPASS invalid_3_False\nPASS invalid_3_True\nPASS invalid_4_False\nPASS invalid_4_True\nPASS invalid_5_False\nPASS invalid_5_True\nPASS invalid_6_False\nPASS invalid_6_True\nPASS invalid_7_False\nPASS invalid_7_True\nPASS invalid_8_False\nPASS invalid_8_True\nHARNESS_FEATURE={\"positive_control\": true, \"feature_failures\": [\"large_fee_checkout_30_False\", \"large_fee_checkout_30_True\", \"large_fee_checkout_400_True\"], \"infrastructure_errors\": [], \"cases\": {\"legacy\": true, \"legacy_receipt\": true, \"fee_checkout\": true, \"fee_receipt\": true, \"fee_zero\": true, \"fee_with_discount\": true, \"large_fee_receipt_30\": true, \"large_fee_checkout_30_False\": false, \"large_fee_checkout_30_True\": false, \"large_fee_receipt_400\": true, \"large_fee_checkout_400_False\": true, \"large_fee_checkout_400_True\": false, \"invalid_0_False\": true, \"invalid_0_True\": true, \"invalid_1_False\": true, \"invalid_1_True\": true, \"invalid_2_False\": true, \"invalid_2_True\": true, \"invalid_3_False\": true, \"invalid_3_True\": true, \"invalid_4_False\": true, \"invalid_4_True\": true, \"invalid_5_False\": true, \"invalid_5_True\": true, \"invalid_6_False\": true, \"invalid_6_True\": true, \"invalid_7_False\": true, \"invalid_7_True\": true, \"invalid_8_False\": true, \"invalid_8_True\": true}}\n",
+  "stderr": "",
+  "truncated": false,
+  "timed_out": false,
+  "cancelled": false,
+  "seconds": 1.874,
+  "reason": "",
+  "container": "harness-precision-regression-366a542c",
+  "cleanup_verified": true
+}

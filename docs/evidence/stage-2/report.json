@@ -1,11 +1,11 @@
 {
-  "run_id": "20261103T153055Z-1ebf09b6",
-  "started_at": "2026-11-03T15:30:55.765779+00:00",
-  "finished_at": "2026-11-03T16:09:22.817822+00:00",
-  "state": "limit_reached",
-  "reason": "Aktionslimit erreicht",
-  "model_summary": null,
-  "success": false,
+  "run_id": "20261116T164810Z-6e87ce83",
+  "started_at": "2026-11-16T16:48:10.888075+00:00",
+  "finished_at": "2026-11-16T16:49:47.960844+00:00",
+  "state": "passed",
+  "reason": "Added optional service_fee to Teller.checks_out_articles_from and Receipt. Validation rejects bool, non-numeric, negative, NaN, and infinity with ValueError. For large integer fees, total_price returns an exact Fraction to avoid OverflowError and precision loss. All feature, regression_core, regression_pricing, and lint checks pass.",
+  "model_summary": "Added optional service_fee to Teller.checks_out_articles_from and Receipt. Validation rejects bool, non-numeric, negative, NaN, and infinity with ValueError. For large integer fees, total_price returns an exact Fraction to avoid OverflowError and precision loss. All feature, regression_core, regression_pricing, and lint checks pass.",
+  "success": true,
   "simulated": false,
   "editable": [
     "shopping_cart.py",
@@ -19,7 +19,7 @@
   "baseline_bug_reproduced": false,
   "baseline_feature_reproduced": true,
   "provider": "ollama",
-  "model": "qwen2.5-coder:7b",
+  "model": "qwen3.8:27b",
   "model_protocol": "json_schema",
   "target": {
     "name": "Supermarket Receipt",
@@ -35,251 +35,154 @@
       "catalog.py"
     ]
   },
-  "task": "Add an optional service_fee to supermarket checkout and receipts. Public APIs must support Teller.checks_out_articles_from(cart, service_fee=0) and Receipt(service_fee=0). Existing calls without the argument must keep working. Add the fee exactly once after existing item prices and discounts. Accept finite int/float values greater than or equal to zero; reject negative values, NaN, infinity, strings, None and bool with a clear ValueError. Preserve existing quantities, prices and discounts. Find the relevant modules yourself with the repository tools, implement the feature across the interacting modules, run feature, regression_core, regression_pricing and lint, and fix any failed checks before finishing.",
+  "task": "Add an optional service_fee to supermarket checkout and receipts. Public APIs must support Teller.checks_out_articles_from(cart, service_fee=0) and Receipt(service_fee=0). Existing calls without the argument must keep working. Add the fee exactly once after existing item prices and discounts. Accept finite int/float values greater than or equal to zero; reject negative values, NaN, infinity, strings, None and bool with a clear ValueError. Preserve existing quantities, prices and discounts. Python integers of any size, including 10**30 and 10**400, must work without OverflowError or loss of the item subtotal, including fractional amounts after discounts. For integer fees that would lose precision when added to a float, return an exact rational total; Python's standard-library fractions.Fraction is permitted. Do not approximate such totals with float or round away item amounts. Protected acceptance checks live outside your repository and can only be invoked with run_check. Do not search for their implementation. Find the relevant application modules yourself with the repository tools, implement the feature across the interacting modules, run feature, regression_core, regression_pricing and lint, and fix any failed checks before finishing.",
   "project": "supermarket",
   "profile": "feature",
-  "effective_context_bytes": 16384,
+  "effective_context_bytes": 32768,
   "steps": [
     {
       "action": 1,
-      "name": "replace_text",
-      "status": "denied"
+      "name": "read_file",
+      "status": "completed",
+      "path": "receipt.py",
+      "check_id": ""
     },
     {
       "action": 2,
       "name": "read_file",
-      "status": "completed"
+      "status": "completed",
+      "path": "teller.py",
+      "check_id": ""
     },
     {
       "action": 3,
-      "name": "replace_text",
-      "status": "completed"
+      "name": "read_file",
+      "status": "completed",
+      "path": "shopping_cart.py",
+      "check_id": ""
     },
     {
       "action": 4,
-      "name": "replace_text",
-      "status": "completed"
+      "name": "read_file",
+      "status": "completed",
+      "path": "receipt_printer.py",
+      "check_id": ""
+    },
+    {
+      "action": 5,
+      "name": "read_file",
+      "status": "completed",
+      "path": "model_objects.py",
+      "check_id": ""
     },
     {
       "action": 6,
-      "name": "run_check",
-      "status": "passed"
+      "name": "read_file",
+      "status": "completed",
+      "path": "catalog.py",
+      "check_id": ""
     },
     {
       "action": 7,
-      "name": "run_check",
-      "status": "passed"
+      "name": "read_file",
+      "status": "completed",
+      "path": "tests/fake_catalog.py",
+      "check_id": ""
     },
     {
       "action": 8,
-      "name": "run_check",
-      "status": "passed"
+      "name": "read_file",
+      "status": "completed",
+      "path": "tests/test_supermarket.py",
+      "check_id": ""
     },
     {
       "action": 9,
-      "name": "finish",
-      "status": "completed"
+      "name": "read_file",
+      "status": "completed",
+      "path": "texttest_fixture.py",
+      "check_id": ""
     },
     {
       "action": 10,
-      "name": "read_file",
-      "status": "completed"
+      "name": "search_files",
+      "status": "completed",
+      "path": ".",
+      "check_id": ""
     },
     {
       "action": 11,
-      "name": "read_file",
-      "status": "completed"
+      "name": "list_files",
+      "status": "completed",
+      "path": ".",
+      "check_id": ""
     },
     {
       "action": 12,
       "name": "replace_text",
-      "status": "completed"
+      "status": "completed",
+      "path": "receipt.py",
+      "check_id": ""
     },
     {
       "action": 13,
-      "name": "run_check",
-      "status": "failed"
+      "name": "replace_text",
+      "status": "completed",
+      "path": "teller.py",
+      "check_id": ""
     },
     {
       "action": 14,
-      "name": "read_file",
-      "status": "completed"
-    },
-    {
-      "action": 15,
-      "name": "replace_text",
-      "status": "completed"
-    },
-    {
-      "action": 16,
-      "name": "run_check",
-      "status": "failed"
-    },
-    {
-      "action": 17,
-      "name": "read_file",
-      "status": "completed"
-    },
-    {
-      "action": 18,
-      "name": "replace_text",
-      "status": "completed"
-    },
-    {
-      "kind": "model_error",
-      "request": 19,
-      "error": "Ollama-Anfrage fehlgeschlagen: "
-    },
-    {
-      "action": 20,
-      "name": "run_check",
-      "status": "failed"
-    },
-    {
-      "action": 21,
-      "name": "run_check",
-      "status": "passed",
-      "path": "",
-      "check_id": "regression_core"
-    },
-    {
-      "action": 22,
-      "name": "run_check",
-      "status": "passed",
-      "path": "",
-      "check_id": "regression_pricing"
-    },
-    {
-      "action": 23,
       "name": "run_check",
       "status": "failed",
       "path": "",
       "check_id": "feature"
     },
     {
-      "action": 24,
-      "name": "read_file",
-      "status": "completed",
-      "path": "teller.py",
-      "check_id": ""
-    },
-    {
-      "action": 25,
+      "action": 15,
       "name": "replace_text",
-      "status": "denied",
-      "path": "teller.py",
-      "check_id": ""
-    },
-    {
-      "action": 26,
-      "name": "read_file",
       "status": "completed",
-      "path": "teller.py",
+      "path": "receipt.py",
       "check_id": ""
     },
     {
-      "action": 27,
-      "name": "replace_text",
-      "status": "denied",
-      "path": "teller.py",
-      "check_id": ""
+      "action": 16,
+      "name": "run_check",
+      "status": "passed",
+      "path": "",
+      "check_id": "feature"
     },
     {
-      "action": 28,
-      "name": "read_file",
+      "action": 17,
+      "name": "run_check",
+      "status": "passed",
+      "path": "",
+      "check_id": "regression_core"
+    },
+    {
+      "action": 18,
+      "name": "run_check",
+      "status": "passed",
+      "path": "",
+      "check_id": "regression_pricing"
+    },
+    {
+      "action": 19,
+      "name": "run_check",
+      "status": "passed",
+      "path": "",
+      "check_id": "lint"
+    },
+    {
+      "action": 20,
+      "name": "finish",
       "status": "completed",
-      "path": "teller.py",
-      "check_id": ""
-    },
-    {
-      "action": 29,
-      "name": "replace_text",
-      "status": "denied",
-      "path": "teller.py",
-      "check_id": ""
-    },
-    {
-      "action": 30,
-      "name": "read_file",
-      "status": "completed",
-      "path": "teller.py",
-      "check_id": ""
-    },
-    {
-      "action": 31,
-      "name": "replace_text",
-      "status": "denied",
-      "path": "teller.py",
-      "check_id": ""
-    },
-    {
-      "action": 32,
-      "name": "read_file",
-      "status": "completed",
-      "path": "teller.py",
-      "check_id": ""
-    },
-    {
-      "action": 33,
-      "name": "replace_text",
-      "status": "denied",
-      "path": "teller.py",
-      "check_id": ""
-    },
-    {
-      "action": 34,
-      "name": "read_file",
-      "status": "completed",
-      "path": "teller.py",
-      "check_id": ""
-    },
-    {
-      "action": 35,
-      "name": "replace_text",
-      "status": "denied",
-      "path": "teller.py",
-      "check_id": ""
-    },
-    {
-      "action": 36,
-      "name": "read_file",
-      "status": "completed",
-      "path": "teller.py",
-      "check_id": ""
-    },
-    {
-      "action": 37,
-      "name": "replace_text",
-      "status": "denied",
-      "path": "teller.py",
-      "check_id": ""
-    },
-    {
-      "action": 38,
-      "name": "read_file",
-      "status": "completed",
-      "path": "teller.py",
-      "check_id": ""
-    },
-    {
-      "action": 39,
-      "name": "replace_text",
-      "status": "denied",
-      "path": "teller.py",
-      "check_id": ""
-    },
-    {
-      "action": 40,
-      "name": "read_file",
-      "status": "completed",
-      "path": "teller.py",
+      "path": "",
       "check_id": ""
     }
   ],
   "pending": null,
-  "unfinished_work": [
-    "Unabhängige erfolgreiche Endprüfung noch offen"
-  ],
+  "unfinished_work": [],
   "limits": {
     "actions": 40,
     "rounds": 50,
@@ -293,13 +196,13 @@
   },
   "environment": {
     "platform": "linux",
-    "image_id": "sha256:896dc65c1db5517c524ad115de04441e5e472589271f30b597926b186e4d192e"
+    "image_id": "sha256:aca411b2bfd08d5275b860fe6a9b88bd1f6b20ab641e05f2818e4a62747953ce"
   },
-  "actions": 40,
-  "rounds": 42,
-  "requests": 43,
-  "retries": 1,
-  "denials": 9,
+  "actions": 20,
+  "rounds": 21,
+  "requests": 21,
+  "retries": 0,
+  "denials": 0,
   "changed_files": [
     "receipt.py",
     "teller.py"
@@ -317,14 +220,14 @@
         "feature"
       ],
       "exit_code": 1,
-      "stdout": "PASS legacy\nPASS legacy_receipt\nfee_checkout: TypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nFAIL fee_checkout\nfee_receipt: TypeError: Receipt.__init__() got an unexpected keyword argument 'service_fee'\nFAIL fee_receipt\nfee_zero: TypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nFAIL fee_zero\nfee_with_discount: TypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nFAIL fee_with_discount\ninvalid_0_False: TypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nFAIL invalid_0_False\ninvalid_0_True: TypeError: Receipt.__init__() got an unexpected keyword argument 'service_fee'\nFAIL invalid_0_True\ninvalid_1_False: TypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nFAIL invalid_1_False\ninvalid_1_True: TypeError: Receipt.__init__() got an unexpected keyword argument 'service_fee'\nFAIL invalid_1_True\ninvalid_2_False: TypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nFAIL invalid_2_False\ninvalid_2_True: TypeError: Receipt.__init__() got an unexpected keyword argument 'service_fee'\nFAIL invalid_2_True\ninvalid_3_False: TypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nFAIL invalid_3_False\ninvalid_3_True: TypeError: Receipt.__init__() got an unexpected keyword argument 'service_fee'\nFAIL invalid_3_True\ninvalid_4_False: TypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nFAIL invalid_4_False\ninvalid_4_True: TypeError: Receipt.__init__() got an unexpected keyword argument 'service_fee'\nFAIL invalid_4_True\ninvalid_5_False: TypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nFAIL invalid_5_False\ninvalid_5_True: TypeError: Receipt.__init__() got an unexpected keyword argument 'service_fee'\nFAIL invalid_5_True\nHARNESS_FEATURE={\"positive_control\": true, \"feature_failures\": [\"fee_checkout\", \"fee_receipt\", \"fee_zero\", \"fee_with_discount\", \"invalid_0_False\", \"invalid_0_True\", \"invalid_1_False\", \"invalid_1_True\", \"invalid_2_False\", \"invalid_2_True\", \"invalid_3_False\", \"invalid_3_True\", \"invalid_4_False\", \"invalid_4_True\", \"invalid_5_False\", \"invalid_5_True\"], \"infrastructure_errors\": [], \"cases\": {\"legacy\": true, \"legacy_receipt\": true, \"fee_checkout\": false, \"fee_receipt\": false, \"fee_zero\": false, \"fee_with_discount\": false, \"invalid_0_False\": false, \"invalid_0_True\": false, \"invalid_1_False\": false, \"invalid_1_True\": false, \"invalid_2_False\": false, \"invalid_2_True\": false, \"invalid_3_False\": false, \"invalid_3_True\": false, \"invalid_4_False\": false, \"invalid_4_True\": false, \"invalid_5_False\": false, \"invalid_5_True\": false}}\n",
-      "stderr": "",
+      "stdout": "PASS legacy\nPASS legacy_receipt\nfee_checkout: TypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nFAIL fee_checkout\nfee_receipt: TypeError: Receipt.__init__() got an unexpected keyword argument 'service_fee'\nFAIL fee_receipt\nfee_zero: TypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nFAIL fee_zero\nfee_with_discount: TypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nFAIL fee_with_discount\nlarge_fee_receipt_30: TypeError: Receipt.__init__() got an unexpected keyword argument 'service_fee'\nFAIL large_fee_receipt_30\nlarge_fee_checkout_30_False: TypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nFAIL large_fee_checkout_30_False\nlarge_fee_checkout_30_True: TypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nFAIL large_fee_checkout_30_True\nlarge_fee_receipt_400: TypeError: Receipt.__init__() got an unexpected keyword argument 'service_fee'\nFAIL large_fee_receipt_400\nlarge_fee_checkout_400_False: TypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nFAIL large_fee_checkout_400_False\nlarge_fee_checkout_400_True: TypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nFAIL large_fee_checkout_400_True\ninvalid_0_False: TypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nFAIL invalid_0_False\ninvalid_0_True: TypeError: Receipt.__init__() got an unexpected keyword argument 'service_fee'\nFAIL invalid_0_True\ninvalid_1_False: TypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nFAIL invalid_1_False\ninvalid_1_True: TypeError: Receipt.__init__() got an unexpected keyword argument 'service_fee'\nFAIL invalid_1_True\ninvalid_2_False: TypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nFAIL invalid_2_False\ninvalid_2_True: TypeError: Receipt.__init__() got an unexpected keyword argument 'service_fee'\nFAIL invalid_2_True\ninvalid_3_False: TypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nFAIL invalid_3_False\ninvalid_3_True: TypeError: Receipt.__init__() got an unexpected keyword argument 'service_fee'\nFAIL invalid_3_True\ninvalid_4_False: TypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nFAIL invalid_4_False\ninvalid_4_True: TypeError: Receipt.__init__() got an unexpected keyword argument 'service_fee'\nFAIL invalid_4_True\ninvalid_5_False: TypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nFAIL invalid_5_False\ninvalid_5_True: TypeError: Receipt.__init__() got an unexpected keyword argument 'service_fee'\nFAIL invalid_5_True\ninvalid_6_False: TypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nFAIL invalid_6_False\ninvalid_6_True: TypeError: Receipt.__init__() got an unexpected keyword argument 'service_fee'\nFAIL invalid_6_True\ninvalid_7_False: TypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nFAIL invalid_7_False\ninvalid_7_True: TypeError: Receipt.__init__() got an unexpected keyword argument 'service_fee'\nFAIL invalid_7_True\ninvalid_8_False: TypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nFAIL invalid_8_False\ninvalid_8_True: TypeError: Receipt.__init__() got an unexpected keyword argument 'service_fee'\nFAIL invalid_8_True\nHARNESS_FEATURE={\"positive_control\": true, \"feature_failures\": [\"fee_checkout\", \"fee_receipt\", \"fee_zero\", \"fee_with_discount\", \"large_fee_receipt_30\", \"large_fee_checkout_30_False\", \"large_fee_checkout_30_True\", \"large_fee_receipt_400\", \"large_fee_checkout_400_False\", \"large_fee_checkout_400_True\", \"invalid_0_False\", \"invalid_0_True\", \"invalid_1_False\", \"invalid_1_True\", \"invalid_2_False\", \"invalid_2_True\", \"invalid_3_False\", \"invalid_3_True\", \"invalid_4_False\", \"invalid_4_True\", \"invalid_5_False\", \"invalid_5_True\", \"invalid_6_False\", \"invalid_6_True\", \"invalid_7_False\", \"invalid_7_True\", \"invalid_8_False\", \"invalid_8_True\"], \"infrastructure_errors\": [], \"cases\": {\"legacy\": true, \"legacy_receipt\": true, \"fee_checkout\": false, \"fee_receipt\": false, \"fee_zero\": false, \"fee_with_discount\": false, \"large_fee_receipt_30\": false, \"large_fee_checkout_30_False\": false, \"large_fee_checkout_30_True\": false, \"large_fee_receipt_400\": false, \"large_fee_checkout_400_False\": false, \"large_fee_checkout_400_True\": false, \"invalid_0_False\": false, \"invalid_0_True\": false, \"invalid_1_False\": false, \"invalid_1_True\": false, \"invalid_2_False\": false, \"invalid_2_True\": false, \"invalid_3_False\": false, \"invalid_3_True\": false, \"invalid_4_False\": false, \"invalid_4_True\": false, \"invalid_5_False\": false, \"invalid_5_True\": false, \"invalid_6_False\": false, \"invalid_6_True\": false, \"invalid_7_False\": false, \"invalid_7_True\": false, \"invalid_8_False\": false, \"invalid_8_True\": false}}\n",
+      "stderr": "Traceback (most recent call last):\n  File \"/trusted/feature.py\", line 40, in case\n    passed = bool(operation())\n                  ^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 56, in <lambda>\n    case(\"fee_checkout\", lambda: math.isclose(purchase(1.5).total_price(), 5.5))\n                                              ^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 29, in purchase\n    teller.checks_out_articles_from(cart, service_fee=fee)\nTypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nTraceback (most recent call last):\n  File \"/trusted/feature.py\", line 40, in case\n    passed = bool(operation())\n                  ^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 57, in <lambda>\n    case(\"fee_receipt\", lambda: math.isclose(Receipt(service_fee=1.5).total_price(), 1.5))\n                                             ^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: Receipt.__init__() got an unexpected keyword argument 'service_fee'\nTraceback (most recent call last):\n  File \"/trusted/feature.py\", line 40, in case\n    passed = bool(operation())\n                  ^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 58, in <lambda>\n    case(\"fee_zero\", lambda: math.isclose(purchase(0).total_price(), 4.0))\n                                          ^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 29, in purchase\n    teller.checks_out_articles_from(cart, service_fee=fee)\nTypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nTraceback (most recent call last):\n  File \"/trusted/feature.py\", line 40, in case\n    passed = bool(operation())\n                  ^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 59, in <lambda>\n    case(\"fee_with_discount\", lambda: math.isclose(purchase(1.5, discount=True).total_price(), 5.1))\n                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 29, in purchase\n    teller.checks_out_articles_from(cart, service_fee=fee)\nTypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nTraceback (most recent call last):\n  File \"/trusted/feature.py\", line 40, in case\n    passed = bool(operation())\n                  ^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 72, in <lambda>\n    lambda fee=fee: Receipt(service_fee=fee).total_price() == fee,\n                    ^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: Receipt.__init__() got an unexpected keyword argument 'service_fee'\nTraceback (most recent call last):\n  File \"/trusted/feature.py\", line 77, in <lambda>\n    lambda fee=fee, discount=discount: preserves_subtotal(fee, discount),\n                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 63, in preserves_subtotal\n    expected = purchase(0, discount=discount).total_price()\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 29, in purchase\n    teller.checks_out_articles_from(cart, service_fee=fee)\nTypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nTraceback (most recent call last):\n  File \"/trusted/feature.py\", line 77, in <lambda>\n    lambda fee=fee, discount=discount: preserves_subtotal(fee, discount),\n                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 63, in preserves_subtotal\n    expected = purchase(0, discount=discount).total_price()\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 29, in purchase\n    teller.checks_out_articles_from(cart, service_fee=fee)\nTypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nTraceback (most recent call last):\n  File \"/trusted/feature.py\", line 40, in case\n    passed = bool(operation())\n                  ^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 72, in <lambda>\n    lambda fee=fee: Receipt(service_fee=fee).total_price() == fee,\n                    ^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: Receipt.__init__() got an unexpected keyword argument 'service_fee'\nTraceback (most recent call last):\n  File \"/trusted/feature.py\", line 77, in <lambda>\n    lambda fee=fee, discount=discount: preserves_subtotal(fee, discount),\n                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 63, in preserves_subtotal\n    expected = purchase(0, discount=discount).total_price()\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 29, in purchase\n    teller.checks_out_articles_from(cart, service_fee=fee)\nTypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nTraceback (most recent call last):\n  File \"/trusted/feature.py\", line 77, in <lambda>\n    lambda fee=fee, discount=discount: preserves_subtotal(fee, discount),\n                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 63, in preserves_subtotal\n    expected = purchase(0, discount=discount).total_price()\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 29, in purchase\n    teller.checks_out_articles_from(cart, service_fee=fee)\nTypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nTraceback (most recent call last):\n  File \"/trusted/feature.py\", line 91, in <lambda>\n    case(f\"invalid_{index}_{direct}\", lambda v=value, d=direct: invalid(v, d))\n                                                                ^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 82, in invalid\n    Receipt(service_fee=value) if direct else purchase(value)\n                                              ^^^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 29, in purchase\n    teller.checks_out_articles_from(cart, service_fee=fee)\nTypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nTraceback (most recent call last):\n  File \"/trusted/feature.py\", line 40, in case\n    passed = bool(operation())\n                  ^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 91, in <lambda>\n    case(f\"invalid_{index}_{direct}\", lambda v=value, d=direct: invalid(v, d))\n                                                                ^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 82, in invalid\n    Receipt(service_fee=value) if direct else purchase(value)\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: Receipt.__init__() got an unexpected keyword argument 'service_fee'\nTraceback (most recent call last):\n  File \"/trusted/feature.py\", line 91, in <lambda>\n    case(f\"invalid_{index}_{direct}\", lambda v=value, d=direct: invalid(v, d))\n                                                                ^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 82, in invalid\n    Receipt(service_fee=value) if direct else purchase(value)\n                                              ^^^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 29, in purchase\n    teller.checks_out_articles_from(cart, service_fee=fee)\nTypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nTraceback (most recent call last):\n  File \"/trusted/feature.py\", line 40, in case\n    passed = bool(operation())\n                  ^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 91, in <lambda>\n    case(f\"invalid_{index}_{direct}\", lambda v=value, d=direct: invalid(v, d))\n                                                                ^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 82, in invalid\n    Receipt(service_fee=value) if direct else purchase(value)\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: Receipt.__init__() got an unexpected keyword argument 'service_fee'\nTraceback (most recent call last):\n  File \"/trusted/feature.py\", line 91, in <lambda>\n    case(f\"invalid_{index}_{direct}\", lambda v=value, d=direct: invalid(v, d))\n                                                                ^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 82, in invalid\n    Receipt(service_fee=value) if direct else purchase(value)\n                                              ^^^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 29, in purchase\n    teller.checks_out_articles_from(cart, service_fee=fee)\nTypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nTraceback (most recent call last):\n  File \"/trusted/feature.py\", line 40, in case\n    passed = bool(operation())\n                  ^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 91, in <lambda>\n    case(f\"invalid_{index}_{direct}\", lambda v=value, d=direct: invalid(v, d))\n                                                                ^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 82, in invalid\n    Receipt(service_fee=value) if direct else purchase(value)\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: Receipt.__init__() got an unexpected keyword argument 'service_fee'\nTraceback (most recent call last):\n  File \"/trusted/feature.py\", line 91, in <lambda>\n    case(f\"invalid_{index}_{direct}\", lambda v=value, d=direct: invalid(v, d))\n                                                                ^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 82, in invalid\n    Receipt(service_fee=value) if direct else purchase(value)\n                                              ^^^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 29, in purchase\n    teller.checks_out_articles_from(cart, service_fee=fee)\nTypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nTraceback (most recent call last):\n  File \"/trusted/feature.py\", line 40, in case\n    passed = bool(operation())\n                  ^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 91, in <lambda>\n    case(f\"invalid_{index}_{direct}\", lambda v=value, d=direct: invalid(v, d))\n                                                                ^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 82, in invalid\n    Receipt(service_fee=value) if direct else purchase(value)\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: Receipt.__init__() got an unexpected keyword argument 'service_fee'\nTraceback (most recent call last):\n  File \"/trusted/feature.py\", line 91, in <lambda>\n    case(f\"invalid_{index}_{direct}\", lambda v=value, d=direct: invalid(v, d))\n                                                                ^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 82, in invalid\n    Receipt(service_fee=value) if direct else purchase(value)\n                                              ^^^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 29, in purchase\n    teller.checks_out_articles_from(cart, service_fee=fee)\nTypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nTraceback (most recent call last):\n  File \"/trusted/feature.py\", line 40, in case\n    passed = bool(operation())\n                  ^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 91, in <lambda>\n    case(f\"invalid_{index}_{direct}\", lambda v=value, d=direct: invalid(v, d))\n                                                                ^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 82, in invalid\n    Receipt(service_fee=value) if direct else purchase(value)\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: Receipt.__init__() got an unexpected keyword argument 'service_fee'\nTraceback (most recent call last):\n  File \"/trusted/feature.py\", line 91, in <lambda>\n    case(f\"invalid_{index}_{direct}\", lambda v=value, d=direct: invalid(v, d))\n                                                                ^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 82, in invalid\n    Receipt(service_fee=value) if direct else purchase(value)\n                                              ^^^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 29, in purchase\n    teller.checks_out_articles_from(cart, service_fee=fee)\nTypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nTraceback (most recent call last):\n  File \"/trusted/feature.py\", line 40, in case\n    passed = bool(operation())\n                  ^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 91, in <lambda>\n    case(f\"invalid_{index}_{direct}\", lambda v=value, d=direct: invalid(v, d))\n                                                                ^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 82, in invalid\n    Receipt(service_fee=value) if direct else purchase(value)\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: Receipt.__init__() got an unexpected keyword argument 'service_fee'\nTraceback (most recent call last):\n  File \"/trusted/feature.py\", line 91, in <lambda>\n    case(f\"invalid_{index}_{direct}\", lambda v=value, d=direct: invalid(v, d))\n                                                                ^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 82, in invalid\n    Receipt(service_fee=value) if direct else purchase(value)\n                                              ^^^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 29, in purchase\n    teller.checks_out_articles_from(cart, service_fee=fee)\nTypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nTraceback (most recent call last):\n  File \"/trusted/feature.py\", line 40, in case\n    passed = bool(operation())\n                  ^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 91, in <lambda>\n    case(f\"invalid_{index}_{direct}\", lambda v=value, d=direct: invalid(v, d))\n                                                                ^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 82, in invalid\n    Receipt(service_fee=value) if direct else purchase(value)\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: Receipt.__init__() got an unexpected keyword argument 'service_fee'\nTraceback (most recent call last):\n  File \"/trusted/feature.py\", line 91, in <lambda>\n    case(f\"invalid_{index}_{direct}\", lambda v=value, d=direct: invalid(v, d))\n                                                                ^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 82, in invalid\n    Receipt(service_fee=value) if direct else purchase(value)\n                                              ^^^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 29, in purchase\n    teller.checks_out_articles_from(cart, service_fee=fee)\nTypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nTraceback (most recent call last):\n  File \"/trusted/feature.py\", line 40, in case\n    passed = bool(operation())\n                  ^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 91, in <lambda>\n    case(f\"invalid_{index}_{direct}\", lambda v=value, d=direct: invalid(v, d))\n                                                                ^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 82, in invalid\n    Receipt(service_fee=value) if direct else purchase(value)\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: Receipt.__init__() got an unexpected keyword argument 'service_fee'\nTraceback (most recent call last):\n  File \"/trusted/feature.py\", line 91, in <lambda>\n    case(f\"invalid_{index}_{direct}\", lambda v=value, d=direct: invalid(v, d))\n                                                                ^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 82, in invalid\n    Receipt(service_fee=value) if direct else purchase(value)\n                                              ^^^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 29, in purchase\n    teller.checks_out_articles_from(cart, service_fee=fee)\nTypeError: Teller.checks_out_articles_from() got an unexpected keyword argument 'service_fee'\nTraceback (most recent call last):\n  File \"/trusted/feature.py\", line 40, in case\n    passed = bool(operation())\n                  ^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 91, in <lambda>\n    case(f\"invalid_{index}_{direct}\", lambda v=value, d=direct: invalid(v, d))\n                                                                ^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 82, in invalid\n    Receipt(service_fee=value) if direct else purchase(value)\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: Receipt.__init__() got an unexpected keyword argument 'service_fee'\n",
       "truncated": false,
       "timed_out": false,
       "cancelled": false,
-      "seconds": 3.297,
+      "seconds": 1.873,
       "reason": "",
-      "container": "harness-20261103t153055z-1ebf09b6-88d6de3c",
+      "container": "harness-20261116t164810z-6e87ce83-ab7292a6",
       "cleanup_verified": true
     },
     {
@@ -343,9 +246,9 @@
       "truncated": false,
       "timed_out": false,
       "cancelled": false,
-      "seconds": 3.188,
+      "seconds": 1.918,
       "reason": "",
-      "container": "harness-20261103t153055z-1ebf09b6-1a5ffbc2",
+      "container": "harness-20261116t164810z-6e87ce83-4c0f94b9",
       "cleanup_verified": true
     },
     {
@@ -360,13 +263,13 @@
       ],
       "exit_code": 0,
       "stdout": "",
-      "stderr": "test_five_for_amount (pricing_regression.PricingRegression.test_five_for_amount) ... ok\ntest_no_offer (pricing_regression.PricingRegression.test_no_offer) ... ok\ntest_percentage_discount (pricing_regression.PricingRegression.test_percentage_discount) ... ok\ntest_three_for_two (pricing_regression.PricingRegression.test_three_for_two) ... ok\ntest_weighted_product (pricing_regression.PricingRegression.test_weighted_product) ... ok\n\n----------------------------------------------------------------------\nRan 5 tests in 0.001s\n\nOK\n",
+      "stderr": "test_five_for_amount (pricing_regression.PricingRegression.test_five_for_amount) ... ok\ntest_no_offer (pricing_regression.PricingRegression.test_no_offer) ... ok\ntest_percentage_discount (pricing_regression.PricingRegression.test_percentage_discount) ... ok\ntest_three_for_two (pricing_regression.PricingRegression.test_three_for_two) ... ok\ntest_weighted_product (pricing_regression.PricingRegression.test_weighted_product) ... ok\n\n----------------------------------------------------------------------\nRan 5 tests in 0.000s\n\nOK\n",
       "truncated": false,
       "timed_out": false,
       "cancelled": false,
-      "seconds": 3.562,
+      "seconds": 1.991,
       "reason": "",
-      "container": "harness-20261103t153055z-1ebf09b6-202a0aab",
+      "container": "harness-20261116t164810z-6e87ce83-0b18b8ec",
       "cleanup_verified": true
     },
     {
@@ -385,30 +288,51 @@
       "truncated": false,
       "timed_out": false,
       "cancelled": false,
-      "seconds": 2.687,
+      "seconds": 1.857,
       "reason": "",
-      "container": "harness-20261103t153055z-1ebf09b6-1609d3fb",
+      "container": "harness-20261116t164810z-6e87ce83-a0643beb",
       "cleanup_verified": true
     },
     {
       "phase": "agent",
       "check_id": "feature",
-      "status": "unavailable",
+      "status": "failed",
       "command": [
         "python",
         "-I",
         "/trusted/entry.py",
         "feature"
       ],
-      "exit_code": null,
-      "stdout": "",
+      "exit_code": 1,
+      "stdout": "PASS legacy\nPASS legacy_receipt\nPASS fee_checkout\nPASS fee_receipt\nPASS fee_zero\nPASS fee_with_discount\nPASS large_fee_receipt_30\nsubtotal expected=4.0 actual=Fraction(19884624838656, 1)\nFAIL large_fee_checkout_30_False\nsubtotal expected=3.6 actual=Fraction(19884624838656, 1)\nFAIL large_fee_checkout_30_True\nPASS large_fee_receipt_400\nlarge_fee_checkout_400_False: OverflowError: int too large to convert to float\nFAIL large_fee_checkout_400_False\nlarge_fee_checkout_400_True: OverflowError: int too large to convert to float\nFAIL large_fee_checkout_400_True\nPASS invalid_0_False\nPASS invalid_0_True\nPASS invalid_1_False\nPASS invalid_1_True\nPASS invalid_2_False\nPASS invalid_2_True\nPASS invalid_3_False\nPASS invalid_3_True\nPASS invalid_4_False\nPASS invalid_4_True\nPASS invalid_5_False\nPASS invalid_5_True\nPASS invalid_6_False\nPASS invalid_6_True\nPASS invalid_7_False\nPASS invalid_7_True\nPASS invalid_8_False\nPASS invalid_8_True\nHARNESS_FEATURE={\"positive_control\": true, \"feature_failures\": [\"large_fee_checkout_30_False\", \"large_fee_checkout_30_True\", \"large_fee_checkout_400_False\", \"large_fee_checkout_400_True\"], \"infrastructure_errors\": [], \"cases\": {\"legacy\": true, \"legacy_receipt\": true, \"fee_checkout\": true, \"fee_receipt\": true, \"fee_zero\": true, \"fee_with_discount\": true, \"large_fee_receipt_30\": true, \"large_fee_checkout_30_False\": false, \"large_fee_checkout_30_True\": false, \"large_fee_receipt_400\": true, \"large_fee_checkout_400_False\": false, \"large_fee_checkout_400_True\": false, \"invalid_0_False\": true, \"invalid_0_True\": true, \"invalid_1_False\": true, \"invalid_1_True\": true, \"invalid_2_False\": true, \"invalid_2_True\": true, \"invalid_3_False\": true, \"invalid_3_True\": true, \"invalid_4_False\": true, \"invalid_4_True\": true, \"invalid_5_False\": true, \"invalid_5_True\": true, \"invalid_6_False\": true, \"invalid_6_True\": true, \"invalid_7_False\": true, \"invalid_7_True\": true, \"invalid_8_False\": true, \"invalid_8_True\": true}}\n",
+      "stderr": "Traceback (most recent call last):\n  File \"/trusted/feature.py\", line 77, in <lambda>\n    lambda fee=fee, discount=discount: preserves_subtotal(fee, discount),\n                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 64, in preserves_subtotal\n    actual = purchase(fee, discount=discount).total_price() - fee\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/repo/receipt.py\", line 36, in total_price\n    total += self._service_fee\nOverflowError: int too large to convert to float\nTraceback (most recent call last):\n  File \"/trusted/feature.py\", line 77, in <lambda>\n    lambda fee=fee, discount=discount: preserves_subtotal(fee, discount),\n                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/trusted/feature.py\", line 64, in preserves_subtotal\n    actual = purchase(fee, discount=discount).total_price() - fee\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/repo/receipt.py\", line 36, in total_price\n    total += self._service_fee\nOverflowError: int too large to convert to float\n",
+      "truncated": false,
+      "timed_out": false,
+      "cancelled": false,
+      "seconds": 1.98,
+      "reason": "",
+      "container": "harness-20261116t164810z-6e87ce83-645e6371",
+      "cleanup_verified": true
+    },
+    {
+      "phase": "agent",
+      "check_id": "feature",
+      "status": "passed",
+      "command": [
+        "python",
+        "-I",
+        "/trusted/entry.py",
+        "feature"
+      ],
+      "exit_code": 0,
+      "stdout": "PASS legacy\nPASS legacy_receipt\nPASS fee_checkout\nPASS fee_receipt\nPASS fee_zero\nPASS fee_with_discount\nPASS large_fee_receipt_30\nsubtotal expected=4.0 actual=Fraction(4, 1)\nPASS large_fee_checkout_30_False\nsubtotal expected=3.6 actual=Fraction(8106479329266893, 2251799813685248)\nPASS large_fee_checkout_30_True\nPASS large_fee_receipt_400\nsubtotal expected=4.0 actual=Fraction(4, 1)\nPASS large_fee_checkout_400_False\nsubtotal expected=3.6 actual=Fraction(8106479329266893, 2251799813685248)\nPASS large_fee_checkout_400_True\nPASS invalid_0_False\nPASS invalid_0_True\nPASS invalid_1_False\nPASS invalid_1_True\nPASS invalid_2_False\nPASS invalid_2_True\nPASS invalid_3_False\nPASS invalid_3_True\nPASS invalid_4_False\nPASS invalid_4_True\nPASS invalid_5_False\nPASS invalid_5_True\nPASS invalid_6_False\nPASS invalid_6_True\nPASS invalid_7_False\nPASS invalid_7_True\nPASS invalid_8_False\nPASS invalid_8_True\nHARNESS_FEATURE={\"positive_control\": true, \"feature_failures\": [], \"infrastructure_errors\": [], \"cases\": {\"legacy\": true, \"legacy_receipt\": true, \"fee_checkout\": true, \"fee_receipt\": true, \"fee_zero\": true, \"fee_with_discount\": true, \"large_fee_receipt_30\": true, \"large_fee_checkout_30_False\": true, \"large_fee_checkout_30_True\": true, \"large_fee_receipt_400\": true, \"large_fee_checkout_400_False\": true, \"large_fee_checkout_400_True\": true, \"invalid_0_False\": true, \"invalid_0_True\": true, \"invalid_1_False\": true, \"invalid_1_True\": true, \"invalid_2_False\": true, \"invalid_2_True\": true, \"invalid_3_False\": true, \"invalid_3_True\": true, \"invalid_4_False\": true, \"invalid_4_True\": true, \"invalid_5_False\": true, \"invalid_5_True\": true, \"invalid_6_False\": true, \"invalid_6_True\": true, \"invalid_7_False\": true, \"invalid_7_True\": true, \"invalid_8_False\": true, \"invalid_8_True\": true}}\n",
       "stderr": "",
       "truncated": false,
       "timed_out": false,
-      "cancelled": true,
-      "seconds": 1.5,
-      "reason": "Container konnte nicht erstellt werden",
-      "container": "harness-20261103t153055z-1ebf09b6-051d5acb",
+      "cancelled": false,
+      "seconds": 1.948,
+      "reason": "",
+      "container": "harness-20261116t164810z-6e87ce83-9ef9796a",
       "cleanup_verified": true
     },
     {
@@ -427,9 +351,9 @@
       "truncated": false,
       "timed_out": false,
       "cancelled": false,
-      "seconds": 3.172,
+      "seconds": 1.912,
       "reason": "",
-      "container": "harness-20261103t153055z-1ebf09b6-c79e66c5",
+      "container": "harness-20261116t164810z-6e87ce83-e10cb489",
       "cleanup_verified": true
     },
     {
@@ -444,13 +368,13 @@
       ],
       "exit_code": 0,
       "stdout": "",
-      "stderr": "test_five_for_amount (pricing_regression.PricingRegression.test_five_for_amount) ... ok\ntest_no_offer (pricing_regression.PricingRegression.test_no_offer) ... ok\ntest_percentage_discount (pricing_regression.PricingRegression.test_percentage_discount) ... ok\ntest_three_for_two (pricing_regression.PricingRegression.test_three_for_two) ... ok\ntest_weighted_product (pricing_regression.PricingRegression.test_weighted_product) ... ok\n\n----------------------------------------------------------------------\nRan 5 tests in 0.001s\n\nOK\n",
+      "stderr": "test_five_for_amount (pricing_regression.PricingRegression.test_five_for_amount) ... ok\ntest_no_offer (pricing_regression.PricingRegression.test_no_offer) ... ok\ntest_percentage_discount (pricing_regression.PricingRegression.test_percentage_discount) ... ok\ntest_three_for_two (pricing_regression.PricingRegression.test_three_for_two) ... ok\ntest_weighted_product (pricing_regression.PricingRegression.test_weighted_product) ... ok\n\n----------------------------------------------------------------------\nRan 5 tests in 0.000s\n\nOK\n",
       "truncated": false,
       "timed_out": false,
       "cancelled": false,
-      "seconds": 3.187,
+      "seconds": 2.042,
       "reason": "",
-      "container": "harness-20261103t153055z-1ebf09b6-a1e219d4",
+      "container": "harness-20261116t164810z-6e87ce83-1574593d",
       "cleanup_verified": true
     },
     {
@@ -469,34 +393,34 @@
       "truncated": false,
       "timed_out": false,
       "cancelled": false,
-      "seconds": 2.766,
+      "seconds": 1.984,
       "reason": "",
-      "container": "harness-20261103t153055z-1ebf09b6-f72a4901",
+      "container": "harness-20261116t164810z-6e87ce83-091cd586",
       "cleanup_verified": true
     },
     {
-      "phase": "previous_final",
+      "phase": "final",
       "check_id": "feature",
-      "status": "failed",
+      "status": "passed",
       "command": [
         "python",
         "-I",
         "/trusted/entry.py",
         "feature"
       ],
-      "exit_code": 1,
-      "stdout": "PASS legacy\nPASS legacy_receipt\nFAIL fee_checkout\nFAIL fee_receipt\nPASS fee_zero\nFAIL fee_with_discount\nFAIL invalid_0_False\nFAIL invalid_0_True\nFAIL invalid_1_False\nFAIL invalid_1_True\nFAIL invalid_2_False\nFAIL invalid_2_True\nFAIL invalid_3_False\nFAIL invalid_3_True\nFAIL invalid_4_False\nFAIL invalid_4_True\nFAIL invalid_5_False\nFAIL invalid_5_True\nHARNESS_FEATURE={\"positive_control\": true, \"feature_failures\": [\"fee_checkout\", \"fee_receipt\", \"fee_with_discount\", \"invalid_0_False\", \"invalid_0_True\", \"invalid_1_False\", \"invalid_1_True\", \"invalid_2_False\", \"invalid_2_True\", \"invalid_3_False\", \"invalid_3_True\", \"invalid_4_False\", \"invalid_4_True\", \"invalid_5_False\", \"invalid_5_True\"], \"infrastructure_errors\": [], \"cases\": {\"legacy\": true, \"legacy_receipt\": true, \"fee_checkout\": false, \"fee_receipt\": false, \"fee_zero\": true, \"fee_with_discount\": false, \"invalid_0_False\": false, \"invalid_0_True\": false, \"invalid_1_False\": false, \"invalid_1_True\": false, \"invalid_2_False\": false, \"invalid_2_True\": false, \"invalid_3_False\": false, \"invalid_3_True\": false, \"invalid_4_False\": false, \"invalid_4_True\": false, \"invalid_5_False\": false, \"invalid_5_True\": false}}\n",
+      "exit_code": 0,
+      "stdout": "PASS legacy\nPASS legacy_receipt\nPASS fee_checkout\nPASS fee_receipt\nPASS fee_zero\nPASS fee_with_discount\nPASS large_fee_receipt_30\nsubtotal expected=4.0 actual=Fraction(4, 1)\nPASS large_fee_checkout_30_False\nsubtotal expected=3.6 actual=Fraction(8106479329266893, 2251799813685248)\nPASS large_fee_checkout_30_True\nPASS large_fee_receipt_400\nsubtotal expected=4.0 actual=Fraction(4, 1)\nPASS large_fee_checkout_400_False\nsubtotal expected=3.6 actual=Fraction(8106479329266893, 2251799813685248)\nPASS large_fee_checkout_400_True\nPASS invalid_0_False\nPASS invalid_0_True\nPASS invalid_1_False\nPASS invalid_1_True\nPASS invalid_2_False\nPASS invalid_2_True\nPASS invalid_3_False\nPASS invalid_3_True\nPASS invalid_4_False\nPASS invalid_4_True\nPASS invalid_5_False\nPASS invalid_5_True\nPASS invalid_6_False\nPASS invalid_6_True\nPASS invalid_7_False\nPASS invalid_7_True\nPASS invalid_8_False\nPASS invalid_8_True\nHARNESS_FEATURE={\"positive_control\": true, \"feature_failures\": [], \"infrastructure_errors\": [], \"cases\": {\"legacy\": true, \"legacy_receipt\": true, \"fee_checkout\": true, \"fee_receipt\": true, \"fee_zero\": true, \"fee_with_discount\": true, \"large_fee_receipt_30\": true, \"large_fee_checkout_30_False\": true, \"large_fee_checkout_30_True\": true, \"large_fee_receipt_400\": true, \"large_fee_checkout_400_False\": true, \"large_fee_checkout_400_True\": true, \"invalid_0_False\": true, \"invalid_0_True\": true, \"invalid_1_False\": true, \"invalid_1_True\": true, \"invalid_2_False\": true, \"invalid_2_True\": true, \"invalid_3_False\": true, \"invalid_3_True\": true, \"invalid_4_False\": true, \"invalid_4_True\": true, \"invalid_5_False\": true, \"invalid_5_True\": true, \"invalid_6_False\": true, \"invalid_6_True\": true, \"invalid_7_False\": true, \"invalid_7_True\": true, \"invalid_8_False\": true, \"invalid_8_True\": true}}\n",
       "stderr": "",
       "truncated": false,
       "timed_out": false,
       "cancelled": false,
-      "seconds": 3.172,
+      "seconds": 2.009,
       "reason": "",
-      "container": "harness-20261103t153055z-1ebf09b6-33206a5b",
+      "container": "harness-20261116t164810z-6e87ce83-9f717e82",
       "cleanup_verified": true
     },
     {
-      "phase": "previous_final",
+      "phase": "final",
       "check_id": "regression_core",
       "status": "passed",
       "command": [
@@ -511,13 +435,13 @@
       "truncated": false,
       "timed_out": false,
       "cancelled": false,
-      "seconds": 3.438,
+      "seconds": 1.946,
       "reason": "",
-      "container": "harness-20261103t153055z-1ebf09b6-24eaaeab",
+      "container": "harness-20261116t164810z-6e87ce83-9043f993",
       "cleanup_verified": true
     },
     {
-      "phase": "previous_final",
+      "phase": "final",
       "check_id": "regression_pricing",
       "status": "passed",
       "command": [
@@ -528,17 +452,17 @@
       ],
       "exit_code": 0,
       "stdout": "",
-      "stderr": "test_five_for_amount (pricing_regression.PricingRegression.test_five_for_amount) ... ok\ntest_no_offer (pricing_regression.PricingRegression.test_no_offer) ... ok\ntest_percentage_discount (pricing_regression.PricingRegression.test_percentage_discount) ... ok\ntest_three_for_two (pricing_regression.PricingRegression.test_three_for_two) ... ok\ntest_weighted_product (pricing_regression.PricingRegression.test_weighted_product) ... ok\n\n----------------------------------------------------------------------\nRan 5 tests in 0.001s\n\nOK\n",
+      "stderr": "test_five_for_amount (pricing_regression.PricingRegression.test_five_for_amount) ... ok\ntest_no_offer (pricing_regression.PricingRegression.test_no_offer) ... ok\ntest_percentage_discount (pricing_regression.PricingRegression.test_percentage_discount) ... ok\ntest_three_for_two (pricing_regression.PricingRegression.test_three_for_two) ... ok\ntest_weighted_product (pricing_regression.PricingRegression.test_weighted_product) ... ok\n\n----------------------------------------------------------------------\nRan 5 tests in 0.000s\n\nOK\n",
       "truncated": false,
       "timed_out": false,
       "cancelled": false,
-      "seconds": 3.391,
+      "seconds": 1.869,
       "reason": "",
-      "container": "harness-20261103t153055z-1ebf09b6-8cb85136",
+      "container": "harness-20261116t164810z-6e87ce83-50718d5d",
       "cleanup_verified": true
     },
     {
-      "phase": "previous_final",
+      "phase": "final",
       "check_id": "lint",
       "status": "passed",
       "command": [
@@ -553,208 +477,18 @@
       "truncated": false,
       "timed_out": false,
       "cancelled": false,
-      "seconds": 2.969,
+      "seconds": 1.832,
       "reason": "",
-      "container": "harness-20261103t153055z-1ebf09b6-9914b94f",
+      "container": "harness-20261116t164810z-6e87ce83-98769a18",
       "cleanup_verified": true
-    },
-    {
-      "phase": "agent",
-      "check_id": "feature",
-      "status": "failed",
-      "command": [
-        "python",
-        "-I",
-        "/trusted/entry.py",
-        "feature"
-      ],
-      "exit_code": 1,
-      "stdout": "PASS legacy\nPASS legacy_receipt\nFAIL fee_checkout\nFAIL fee_receipt\nPASS fee_zero\nFAIL fee_with_discount\nFAIL invalid_0_False\nFAIL invalid_0_True\nFAIL invalid_1_False\nFAIL invalid_1_True\nFAIL invalid_2_False\nFAIL invalid_2_True\nFAIL invalid_3_False\nFAIL invalid_3_True\nFAIL invalid_4_False\nFAIL invalid_4_True\nFAIL invalid_5_False\nFAIL invalid_5_True\nHARNESS_FEATURE={\"positive_control\": true, \"feature_failures\": [\"fee_checkout\", \"fee_receipt\", \"fee_with_discount\", \"invalid_0_False\", \"invalid_0_True\", \"invalid_1_False\", \"invalid_1_True\", \"invalid_2_False\", \"invalid_2_True\", \"invalid_3_False\", \"invalid_3_True\", \"invalid_4_False\", \"invalid_4_True\", \"invalid_5_False\", \"invalid_5_True\"], \"infrastructure_errors\": [], \"cases\": {\"legacy\": true, \"legacy_receipt\": true, \"fee_checkout\": false, \"fee_receipt\": false, \"fee_zero\": true, \"fee_with_discount\": false, \"invalid_0_False\": false, \"invalid_0_True\": false, \"invalid_1_False\": false, \"invalid_1_True\": false, \"invalid_2_False\": false, \"invalid_2_True\": false, \"invalid_3_False\": false, \"invalid_3_True\": false, \"invalid_4_False\": false, \"invalid_4_True\": false, \"invalid_5_False\": false, \"invalid_5_True\": false}}\n",
-      "stderr": "",
-      "truncated": false,
-      "timed_out": false,
-      "cancelled": false,
-      "seconds": 3.218,
-      "reason": "",
-      "container": "harness-20261103t153055z-1ebf09b6-360939fa",
-      "cleanup_verified": true
-    },
-    {
-      "phase": "agent",
-      "check_id": "feature",
-      "status": "failed",
-      "command": [
-        "python",
-        "-I",
-        "/trusted/entry.py",
-        "feature"
-      ],
-      "exit_code": 1,
-      "stdout": "PASS legacy\nPASS legacy_receipt\nFAIL fee_checkout\nFAIL fee_receipt\nPASS fee_zero\nFAIL fee_with_discount\nFAIL invalid_0_False\nFAIL invalid_0_True\nFAIL invalid_1_False\nFAIL invalid_1_True\nFAIL invalid_2_False\nFAIL invalid_2_True\nFAIL invalid_3_False\nFAIL invalid_3_True\nFAIL invalid_4_False\nFAIL invalid_4_True\nFAIL invalid_5_False\nFAIL invalid_5_True\nHARNESS_FEATURE={\"positive_control\": true, \"feature_failures\": [\"fee_checkout\", \"fee_receipt\", \"fee_with_discount\", \"invalid_0_False\", \"invalid_0_True\", \"invalid_1_False\", \"invalid_1_True\", \"invalid_2_False\", \"invalid_2_True\", \"invalid_3_False\", \"invalid_3_True\", \"invalid_4_False\", \"invalid_4_True\", \"invalid_5_False\", \"invalid_5_True\"], \"infrastructure_errors\": [], \"cases\": {\"legacy\": true, \"legacy_receipt\": true, \"fee_checkout\": false, \"fee_receipt\": false, \"fee_zero\": true, \"fee_with_discount\": false, \"invalid_0_False\": false, \"invalid_0_True\": false, \"invalid_1_False\": false, \"invalid_1_True\": false, \"invalid_2_False\": false, \"invalid_2_True\": false, \"invalid_3_False\": false, \"invalid_3_True\": false, \"invalid_4_False\": false, \"invalid_4_True\": false, \"invalid_5_False\": false, \"invalid_5_True\": false}}\n",
-      "stderr": "",
-      "truncated": false,
-      "timed_out": false,
-      "cancelled": false,
-      "seconds": 3.266,
-      "reason": "",
-      "container": "harness-20261103t153055z-1ebf09b6-cd5b6dc8",
-      "cleanup_verified": true
-    },
-    {
-      "phase": "agent",
-      "check_id": "feature",
-      "status": "failed",
-      "command": [
-        "python",
-        "-I",
-        "/trusted/entry.py",
-        "feature"
-      ],
-      "exit_code": 1,
-      "stdout": "PASS legacy\nPASS legacy_receipt\nFAIL fee_checkout\nFAIL fee_receipt\nPASS fee_zero\nFAIL fee_with_discount\nFAIL invalid_0_False\nFAIL invalid_0_True\nFAIL invalid_1_False\nFAIL invalid_1_True\nFAIL invalid_2_False\nFAIL invalid_2_True\nFAIL invalid_3_False\nFAIL invalid_3_True\nFAIL invalid_4_False\nFAIL invalid_4_True\nFAIL invalid_5_False\nFAIL invalid_5_True\nHARNESS_FEATURE={\"positive_control\": true, \"feature_failures\": [\"fee_checkout\", \"fee_receipt\", \"fee_with_discount\", \"invalid_0_False\", \"invalid_0_True\", \"invalid_1_False\", \"invalid_1_True\", \"invalid_2_False\", \"invalid_2_True\", \"invalid_3_False\", \"invalid_3_True\", \"invalid_4_False\", \"invalid_4_True\", \"invalid_5_False\", \"invalid_5_True\"], \"infrastructure_errors\": [], \"cases\": {\"legacy\": true, \"legacy_receipt\": true, \"fee_checkout\": false, \"fee_receipt\": false, \"fee_zero\": true, \"fee_with_discount\": false, \"invalid_0_False\": false, \"invalid_0_True\": false, \"invalid_1_False\": false, \"invalid_1_True\": false, \"invalid_2_False\": false, \"invalid_2_True\": false, \"invalid_3_False\": false, \"invalid_3_True\": false, \"invalid_4_False\": false, \"invalid_4_True\": false, \"invalid_5_False\": false, \"invalid_5_True\": false}}\n",
-      "stderr": "",
-      "truncated": false,
-      "timed_out": false,
-      "cancelled": false,
-      "seconds": 3.547,
-      "reason": "",
-      "container": "harness-20261103t153055z-1ebf09b6-7445a177",
-      "cleanup_verified": true
-    },
-    {
-      "phase": "agent",
-      "check_id": "regression_core",
-      "status": "passed",
-      "command": [
-        "python",
-        "-I",
-        "/trusted/entry.py",
-        "regression_core"
-      ],
-      "exit_code": 0,
-      "stdout": "",
-      "stderr": "test_ten_percent_discount (tests.test_supermarket.SupermarketTest.test_ten_percent_discount) ... ok\n\n----------------------------------------------------------------------\nRan 1 test in 0.001s\n\nOK\n",
-      "truncated": false,
-      "timed_out": false,
-      "cancelled": false,
-      "seconds": 3.25,
-      "reason": "",
-      "container": "harness-20261103t153055z-1ebf09b6-681a9b67",
-      "cleanup_verified": true
-    },
-    {
-      "phase": "agent",
-      "check_id": "regression_pricing",
-      "status": "passed",
-      "command": [
-        "python",
-        "-I",
-        "/trusted/entry.py",
-        "regression_pricing"
-      ],
-      "exit_code": 0,
-      "stdout": "",
-      "stderr": "test_five_for_amount (pricing_regression.PricingRegression.test_five_for_amount) ... ok\ntest_no_offer (pricing_regression.PricingRegression.test_no_offer) ... ok\ntest_percentage_discount (pricing_regression.PricingRegression.test_percentage_discount) ... ok\ntest_three_for_two (pricing_regression.PricingRegression.test_three_for_two) ... ok\ntest_weighted_product (pricing_regression.PricingRegression.test_weighted_product) ... ok\n\n----------------------------------------------------------------------\nRan 5 tests in 0.001s\n\nOK\n",
-      "truncated": false,
-      "timed_out": false,
-      "cancelled": false,
-      "seconds": 3.859,
-      "reason": "",
-      "container": "harness-20261103t153055z-1ebf09b6-948fc1bd",
-      "cleanup_verified": true
-    },
-    {
-      "phase": "agent",
-      "check_id": "feature",
-      "status": "failed",
-      "command": [
-        "python",
-        "-I",
-        "/trusted/entry.py",
-        "feature"
-      ],
-      "exit_code": 1,
-      "stdout": "PASS legacy\nPASS legacy_receipt\nFAIL fee_checkout\nFAIL fee_receipt\nPASS fee_zero\nFAIL fee_with_discount\nFAIL invalid_0_False\nFAIL invalid_0_True\nFAIL invalid_1_False\nFAIL invalid_1_True\nFAIL invalid_2_False\nFAIL invalid_2_True\nFAIL invalid_3_False\nFAIL invalid_3_True\nFAIL invalid_4_False\nFAIL invalid_4_True\nFAIL invalid_5_False\nFAIL invalid_5_True\nHARNESS_FEATURE={\"positive_control\": true, \"feature_failures\": [\"fee_checkout\", \"fee_receipt\", \"fee_with_discount\", \"invalid_0_False\", \"invalid_0_True\", \"invalid_1_False\", \"invalid_1_True\", \"invalid_2_False\", \"invalid_2_True\", \"invalid_3_False\", \"invalid_3_True\", \"invalid_4_False\", \"invalid_4_True\", \"invalid_5_False\", \"invalid_5_True\"], \"infrastructure_errors\": [], \"cases\": {\"legacy\": true, \"legacy_receipt\": true, \"fee_checkout\": false, \"fee_receipt\": false, \"fee_zero\": true, \"fee_with_discount\": false, \"invalid_0_False\": false, \"invalid_0_True\": false, \"invalid_1_False\": false, \"invalid_1_True\": false, \"invalid_2_False\": false, \"invalid_2_True\": false, \"invalid_3_False\": false, \"invalid_3_True\": false, \"invalid_4_False\": false, \"invalid_4_True\": false, \"invalid_5_False\": false, \"invalid_5_True\": false}}\n",
-      "stderr": "",
-      "truncated": false,
-      "timed_out": false,
-      "cancelled": false,
-      "seconds": 3.469,
-      "reason": "",
-      "container": "harness-20261103t153055z-1ebf09b6-f52f9764",
-      "cleanup_verified": true
-    },
-    {
-      "phase": "final",
-      "check_id": "feature",
-      "status": "not_run",
-      "command": [],
-      "exit_code": null,
-      "stdout": "",
-      "stderr": "",
-      "truncated": false,
-      "timed_out": false,
-      "cancelled": false,
-      "seconds": 0,
-      "reason": "",
-      "container": "",
-      "cleanup_verified": false
-    },
-    {
-      "phase": "final",
-      "check_id": "regression_core",
-      "status": "not_run",
-      "command": [],
-      "exit_code": null,
-      "stdout": "",
-      "stderr": "",
-      "truncated": false,
-      "timed_out": false,
-      "cancelled": false,
-      "seconds": 0,
-      "reason": "",
-      "container": "",
-      "cleanup_verified": false
-    },
-    {
-      "phase": "final",
-      "check_id": "regression_pricing",
-      "status": "not_run",
-      "command": [],
-      "exit_code": null,
-      "stdout": "",
-      "stderr": "",
-      "truncated": false,
-      "timed_out": false,
-      "cancelled": false,
-      "seconds": 0,
-      "reason": "",
-      "container": "",
-      "cleanup_verified": false
-    },
-    {
-      "phase": "final",
-      "check_id": "lint",
-      "status": "not_run",
-      "command": [],
-      "exit_code": null,
-      "stdout": "",
-      "stderr": "",
-      "truncated": false,
-      "timed_out": false,
-      "cancelled": false,
-      "seconds": 0,
-      "reason": "",
-      "container": "",
-      "cleanup_verified": false
     }
   ],
   "trusted_hashes": {
     "acceptance.py": "083ed02e5b4252796a6dca70c9989b3dc90e80c90d58f94016ab7a8320c3a126",
     "entry.py": "93589cf32958088613af80ed5c73b26a45bcf568cd4cf04bc99b58c9a810eab4",
-    "feature.py": "4f7b362b3ec2bb0177305d34ea02a6beba4f1df5df030924ded84a950cf4358f",
-    "pricing_regression.py": "0b1b6481661ea653246e39237a13420d83b1d83e1dade2612cd58e21c2c3191b",
-    "scenario.py": "9d22ec226911ef9667a3e0fa2e0d98289c65e228f3b8e6f05f4dd60913b4e0c4",
+    "feature.py": "d56c51b2bd837b938331410e9ee5ea18866a68a0fdee8067ab69b677e1a34ccc",
+    "pricing_regression.py": "da4398d17b0a525a0d54dc6298b561581725f443a771492e6042ba1545b8d3ec",
+    "scenario.py": "34ffc58a43c95f17e6208021ef321a10775fda955f642cf8cb3f2f652bba9b9f",
     "upstream/LICENSE": "d148169eb360b8bb8566309a25a4126dd26d0a41258799756a7c5317b3536544",
     "upstream/provenance.json": "7fd8b6a636bd1aa9b651fedf6e44691da69042f795e20b0ea9759c8ee5055377",
     "upstream/tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",

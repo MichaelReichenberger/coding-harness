@@ -1,0 +1,125 @@
+{
+  "date": "2026-11-18",
+  "python": "3.13.2",
+  "tests": {
+    "command": [
+      "C:\\Users\\Development\\source\\coding-harness\\.venv\\Scripts\\python.exe",
+      "-m",
+      "pytest",
+      "-q",
+      "--docker",
+      "--junitxml=docs/evidence/stage-2/junit.xml"
+    ],
+    "exit_code": 0,
+    "tests": 91,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "seconds": 58.281,
+    "docker_cases": 6,
+    "ui_cases": 9
+  },
+  "quality": [
+    {
+      "command": [
+        "C:\\Users\\Development\\source\\coding-harness\\.venv\\Scripts\\python.exe",
+        "-m",
+        "ruff",
+        "check",
+        "harness",
+        "app.py",
+        "tests",
+        "checks/entry.py",
+        "checks/feature.py"
+      ],
+      "exit_code": 0,
+      "stdout": "All checks passed!\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\Development\\source\\coding-harness\\.venv\\Scripts\\python.exe",
+        "-m",
+        "ruff",
+        "format",
+        "--check",
+        "harness",
+        "app.py",
+        "tests",
+        "checks/entry.py",
+        "checks/feature.py"
+      ],
+      "exit_code": 0,
+      "stdout": "30 files already formatted\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\Development\\source\\coding-harness\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pip",
+        "check"
+      ],
+      "exit_code": 0,
+      "stdout": "No broken requirements found.\n",
+      "stderr": ""
+    }
+  ],
+  "warnings": "133 DeprecationWarnings for PureWindowsPath.is_reserved, planned removal in Python 3.15. Tests passed on Python 3.13.2.",
+  "fresh_install": {
+    "python": "3.13.2",
+    "venv_created": true,
+    "install_command": "python -m pip install -r requirements.lock",
+    "install_exit_code": 0,
+    "pip_check_exit_code": 0,
+    "pip_check_stdout": "No broken requirements found.\n",
+    "requirements_sha256": "27b07468ed7c16af95b201befa45921c2e9dbce62e5342e19407d4036c75aeca"
+  },
+  "baseline": {
+    "run_id": "20261118T181456Z-5675e978",
+    "state": "baseline_checked",
+    "baseline_feature_reproduced": true,
+    "checks": [
+      {
+        "check_id": "feature",
+        "phase": "baseline",
+        "status": "failed"
+      },
+      {
+        "check_id": "regression_core",
+        "phase": "baseline",
+        "status": "passed"
+      },
+      {
+        "check_id": "regression_pricing",
+        "phase": "baseline",
+        "status": "passed"
+      },
+      {
+        "check_id": "lint",
+        "phase": "baseline",
+        "status": "passed"
+      },
+      {
+        "check_id": "feature",
+        "phase": "final",
+        "status": "not_run"
+      },
+      {
+        "check_id": "regression_core",
+        "phase": "final",
+        "status": "not_run"
+      },
+      {
+        "check_id": "regression_pricing",
+        "phase": "final",
+        "status": "not_run"
+      },
+      {
+        "check_id": "lint",
+        "phase": "final",
+        "status": "not_run"
+      }
+    ]
+  }
+}

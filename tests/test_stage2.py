@@ -330,6 +330,9 @@ def test_feature_cpu_context_counts_full_payload_and_preserves_scope(tmp_path):
         assert "service_fee" in messages[1]["content"]
         assert all(m["role"] != "system" for m in messages[2:])
     assert "gekürzt" in model.requests[1][-1]["content"]
+    events = [e for e in controller.store.snapshot() if e["kind"] == "context_shortened"]
+    assert events and events[0]["source"] == "model_request"
+    assert events[0]["bytes_before"] > events[0]["limit_bytes"] >= events[0]["bytes"]
 
 
 def test_checkpoint_compression_during_action_keeps_failed_tool_observation(tmp_path):
@@ -373,6 +376,12 @@ def test_checkpoint_compression_during_action_keeps_failed_tool_observation(tmp_
     assert "Observation for run_check" in model.requests[1][-1]["content"]
     assert "IMPORTANT feature failed" in model.requests[1][-1]["content"]
     assert any(c["status"] == "failed" for c in report["checks"])
+    events = [e for e in controller.store.snapshot() if e["kind"] == "context_shortened"]
+    assert any(e["source"] == "checkpoint" for e in events)
+    assert all(e["bytes_before"] > e["limit_bytes"] >= e["bytes"] for e in events)
+    assert session.load()["conversation"] == controller.conversation
+    controller.save_checkpoint()
+    assert [e for e in controller.store.snapshot() if e["kind"] == "context_shortened"] == events
 
 
 def test_report_metadata_cannot_bypass_artifact_limit(tmp_path):
@@ -420,3 +429,19 @@ def test_resume_limit_does_not_reuse_previous_final_checks(saved):
     assert report["state"] == "limit_reached"
     assert all(c["status"] == "not_run" for c in report["checks"] if c["phase"] == "final")
     assert any(c["status"] == "passed" for c in report["checks"] if c["phase"] == "previous_final")
+
+
+@pytest.mark.parametrize("state", ["passed", "baseline_checked"])
+def test_resume_completed_session_does_not_mark_it_paused(saved, state):
+    settings, workspace, policy, session, _ = saved
+    data = session.load()
+    data["state"] = state
+    session.write(data)
+
+    with pytest.raises(HarnessError, match="Abgeschlossene Sitzung"):
+        session.validate(workspace, policy)
+
+    assert not (session.path / "pause.json").exists()
+    assert session.load()["state"] == state
+    service = RunService(settings, workspace.path.parent.parent)
+    assert service.sessions()[0]["state"] == state

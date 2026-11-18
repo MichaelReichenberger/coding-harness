@@ -105,6 +105,25 @@ def test_diagnosis_can_display_missing_services(ui, monkeypatch):
     assert any("Voraussetzungen fehlen" in item.value for item in test.warning)
 
 
+def test_context_shortening_is_visible_in_history(ui, monkeypatch):
+    test, fake = ui
+    snapshot = fake.snapshot()
+    snapshot["events"] = [
+        {
+            "at": "2026-11-17T20:00:00+00:00",
+            "kind": "context_shortened",
+            "source": "checkpoint",
+            "bytes_before": 18000,
+            "bytes": 15000,
+            "limit_bytes": 16384,
+        }
+    ]
+    monkeypatch.setattr(fake, "snapshot", lambda: snapshot)
+    test.run()
+    assert not test.exception
+    assert any("Kontext gekürzt · 15000 Bytes" in item.label for item in test.expander)
+
+
 def test_custom_prompt_is_sent_without_demo_task(ui):
     test, fake = ui
     assert test.text_area[0].value == ""
@@ -141,3 +160,16 @@ def test_passed_checks_explain_limited_verification_scope(ui, tmp_path):
     assert not test.exception
     assert test.success[0].value == "Alle konfigurierten Checks bestanden."
     assert any("nicht automatisch geprüft" in item.value for item in test.info)
+
+
+@pytest.mark.parametrize("state", ["passed", "baseline_checked"])
+def test_completed_session_can_be_opened_but_not_resumed(ui, monkeypatch, state):
+    test, fake = ui
+    monkeypatch.setattr(fake, "sessions", lambda: [{"run_id": "saved", "state": state}])
+    opened = []
+    monkeypatch.setattr(fake, "open", lambda run_id: opened.append(run_id), raising=False)
+    test.run()
+    assert button(test, "Sicher fortsetzen").disabled
+    assert not button(test, "Sitzung öffnen").disabled
+    button(test, "Sitzung öffnen").click().run()
+    assert not test.exception and opened == ["saved"]

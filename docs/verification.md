@@ -1,95 +1,29 @@
-# Stage-2-Verifikation · 03.11.2026
+# Prüfung und Modellnachweis
 
-Die finale Gesamtsuite auf Version 0.2.0 bestand mit **86 Tests inklusive sechs echter
-Docker-Fälle**, 158,94 s. Ruff bestanden, 30 Python-Dateien korrekt formatiert.
-Keine Paketkonflikte. Vollständiger aktueller Stand, echte Modellfehler/-läufe und
-Restschritte: [implementation-status.md](implementation-status.md).
+Am 18. November 2026 wurden mit Python 3.13.2 alle 91 Tests bestanden. Darunter sind sechs echte Docker-Fälle und neun Prüfungen der Oberfläche. Die Suite lief in rund 59 Sekunden. Ruff, die Formatprüfung für 30 Pythondateien und `pip check` waren ebenfalls erfolgreich.
 
-Der deterministische Featuretest belegt geschützte rote/grüne Akzeptanz über zwei
-Module mit erhaltener Regression. Er ist ausdrücklich kein echter Modellnachweis.
-Der reale GPU-Runner scheiterte vor dem Coding an CUDA. Der separate CPU-Lauf mit 7B
-endete bei 40 Aktionen als limit_reached, ohne erfolgreichen Fix. Alle vier aktuellen
-Endchecks sind not_run; ältere Endchecks bleiben previous_final. Die vier tatsächlichen
-Abbrüche und Fortsetzungen erhielten eigene Edits und verbrauchte Limits. Die Dateien
-unter docs/evidence/stage-2 wurden unverändert aus diesem echten Lauf kopiert.
-Kein manuell eingesetzter Zielpatch, kein erfolgreicher Modellnachweis.
+Die Tests melden 133 Warnungen zur späteren Entfernung von `PureWindowsPath.is_reserved` in Python 3.15. Auf der geprüften Pythonversion ist dadurch kein Test fehlgeschlagen.
 
-## Prüfungen reproduzieren
+Die aktuelle Prüfung wird in [verification.json](evidence/stage-2/verification.json) mit Befehlen, Ausgaben und Exit-Codes festgehalten. [junit.xml](evidence/stage-2/junit.xml) enthält die einzelnen Testergebnisse. Die Anleitung zum Wiederholen steht in der [README](../README.md).
 
-```powershell
-.\.venv\Scripts\python.exe -m pytest -q
-.\.venv\Scripts\python.exe -m pytest -q --docker
-.\.venv\Scripts\python.exe -m ruff check harness app.py tests checks/entry.py checks/feature.py
-.\.venv\Scripts\python.exe -m harness baseline --profile feature
-```
+Die vollständige Suite wird mit `python -m pytest -q --docker` ausgeführt. Sie umfasst die Offlineprüfungen und sechs echte Docker-Fälle. Die Oberfläche wird dabei mit Streamlit AppTest geprüft. Ein Modellkonto ist dafür nicht erforderlich. Zusätzlich werden Ruff, die Formatierung und die installierten Paketabhängigkeiten geprüft.
 
-Tests für Safe Resume umfassen eigene Änderungen, neue Dateien, Hardlinks, geänderte
-Policy/Baseline, verbrauchte Limits und harte Unterbrechung vor einem Edit. Ein
-Abbruch während einer Modellanfrage verwirft auch eine verspätete Schreibantwort.
-Kontexttests zählen vollständige Payloads, erhalten trusted Kriterien und prüfen
-explizit, dass Checkpointkompression folgende Fehlcheckbeobachtungen nicht verliert.
-Historische Endchecks werden nach Resume nicht als aktuelle Prüfung wiederverwendet.
+Die Abhängigkeiten wurden außerdem mit `pip install -r requirements.lock` in einer neuen Pythonumgebung installiert. Die anschließende Paketprüfung bestand. Ein neuer Baselinelauf am 18. November endete mit `baseline_checked`. Der Featurecheck schlug erwartungsgemäß fehl, beide Regressionen und die Syntaxprüfung bestanden.
 
-## Historischer Stage-1-Nachweis (unverändert)
+## Echter Featurelauf
 
-# Abschließende Verifikation
+Der Lauf `20261116T164810Z-6e87ce83` wurde mit dem lokalen Modell `qwen3.8:27b` auf der Grafikkarte ausgeführt. Er ist nicht simuliert. Nach 20 Werkzeugaktionen und 21 Modellanfragen waren `feature`, `regression_core`, `regression_pricing` und `lint` in der unabhängigen Endprüfung bestanden. Der Modelldiff verändert `receipt.py` und `teller.py`.
 
-Stand: 07.10.2026. Prüfung nach Bereinigung und Zusammenführung der Dokumentation.
-Windows, Python 3.13.2, Streamlit 1.65.0, Ollama 0.40.0,
-`qwen2.5-coder:7b`, Docker Desktop 4.39.0 mit Linux-Engine.
+Nach der ersten eigenen Dateiänderung wurde der Lauf bei zwölf verbrauchten Aktionen sauber abgebrochen. Ein neuer RunService öffnete denselben Checkpoint und setzte die Sitzung mit erhaltenen Änderungen und Zählern fort. Es gab dabei keine unsicher laufende Aktion. [lifecycle.json](evidence/stage-2/lifecycle.json) hält diese Beobachtungen und die damalige GPU-Belegung fest.
 
-| Prüfung | Ergebnis |
-|---|---|
-| Lockdatei-Pakete, `pip check` | keine Paketkonflikte |
-| `harness setup --build` | fixierter Zielcommit und Sandbox-Image vorhanden |
-| `harness doctor` | `core_tests_ready`, `sandbox_ready`, `live_ready` true |
-| Offline-Tests | 59 bestanden, 5 Docker-Fälle explizit übersprungen; 4.8 s einschließlich Prozessstart |
-| Echte Docker-Tests | 5 bestanden, 59 abgewählt; 27.6 s einschließlich Prozessstart |
-| Gesamtsuite nach abschließender Bereinigung | **64 bestanden**, inklusive aller echten Docker-Tests; 32,91 s |
-| Mermaid-Diagramme | beide mit Mermaid 11.17.2 erfolgreich geparst; Semikolon im Sequenztext korrigiert |
-| Ruff | bestanden |
-| `harness baseline` | fachlich rote Akzeptanz, grüne Regressionen; Exit-Code 0 |
-| Streamlit | Health `ok`, Webseite HTTP 200 auf Testport 8502; UI-Tests in Offline-Suite enthalten |
-| Echter 7B-Lauf | `passed`, 30.0 s, 6 Aktionen/Anfragen, 0 Retrys, 0 Ablehnungen |
+[report.json](evidence/stage-2/report.json), [events.jsonl](evidence/stage-2/events.jsonl), [session.json](evidence/stage-2/session.json) und [changes.diff](evidence/stage-2/changes.diff) sind die unveränderten Rohdateien dieses Laufs. Sie beziehen sich auf den damaligen Code- und Konfigurationsstand. Sie sind Belege und keine Sitzung, die auf einem anderen Rechner unmittelbar fortgesetzt werden soll. Lokale Pfade und Zeitstempel darin bleiben deshalb erhalten.
 
-Der Docker-Test prüft Mount-/Netzisolation, geschützte Dateien, begrenzte Ausgabe mit
-Nonzero-Exit sowie Timeout/Abbruch mit Kindprozessen. Der Scripted-Rot-Grün-Test ist
-eine Testfixture und wird nicht als echter Modellnachweis ausgegeben.
-Python 3.13 meldet die vorhandene `PurePath.is_reserved`-Deprecation; alle Tests bestehen.
+Ein früherer Modellpatch verlor bei großen Gebühren den Warenbetrag oder dessen Nachkommastellen. [previous-model-regression.json](evidence/stage-2/previous-model-regression.json) zeigt die betreffenden Fehlprüfungen. Daraufhin wurden die Präzisionsfälle und die Anforderung einer exakten rationalen Summe ergänzt. Der erfolgreiche Lauf erhielt den Hinweis auf `fractions.Fraction`, aber keinen fertigen Patch. Unterstützung und Herkunft sind in der README offengelegt.
 
-## Echter Modellnachweis
+## Was die Prüfung aussagt
 
-Lauf `20261007T171054Z-a4859127`: `simulated=false`,
-`baseline_bug_reproduced=true`, nur `receipt_printer.py` geändert.
-Alle drei Checks beim Agenten und in der unabhängigen Endprüfung bestanden;
-alle neun Container-Checks bestätigten Cleanup. Keine Harness-Container verblieben.
+Die geschützten Featuretests prüfen 30 Fälle für die Servicegebühr. Die beiden Regressionen sichern bestehende Preisregeln ab. Der zusätzliche Check `lint` ist eine Syntaxprüfung mit Python-AST. Die genaue Aufgabenbeschreibung steht in [task.md](task.md).
 
-- [Unveränderter Laufbericht](evidence/report.json): Prompt, Limits, Ausgangscommit,
-  Checkhashes, Image-ID, Zähler und tatsächliche Ergebnisse.
-- [Modelldiff](evidence/changes.diff): ausschließlich EACH-Mengenanzeige.
-- [Unveränderte Ereignisse](evidence/events.jsonl): Modellantworten und Werkzeugaufrufe.
-- [Prüfprotokoll](evidence/checks.json): Befehle, Exit-Codes, Laufzeiten und Ausgaben.
+Diese Checks decken die vorbereiteten Geschäftsregeln ab. Sie beweisen keine beliebigen Zusatzanforderungen eines anderen Prompts und keine allgemeine Fehlerfreiheit. Ein echter Modelllauf muss auf einem anderen Rechner nicht dieselben Aktionen oder dasselbe Ergebnis liefern. Die deterministischen Harness-Tests prüfen den Ablauf unabhängig davon.
 
-**Manuelle Hilfe:** vorhandene kleine Aufgabe, erlaubter Scope und geschützte Tests
-wurden vorab festgelegt. Der Nutzerprompt wurde nach einem früheren gescheiterten
-Versuch präzisiert und nennt die zu lesende Druckdatei. Der vollständige Prompt steht
-in der [README](../README.md#beispielprompt) und im Feld `task` des Berichts.
-Kein fertiger Patch und kein Quellcodeausschnitt wurde dem Modell gegeben.
-Die Referenz und die geschützten Checks bleiben unverändert.
-
-## Bereinigung und Aussagegrenzen
-
-Historische Versuche, redundante Status-/Architekturdokumente, doppelte PDF-Kopie,
-alter Implementierungsauftrag, Installations-Testkopie, alte Logs und Testcaches
-wurden entfernt. Klassen, Ablauf und Diagramme stehen zentral in der README.
-Die kanonische Spezifikation, Code, Tests, Konfiguration und Upstream-Lizenznachweise
-bleiben erhalten. Nur die aktuelle Nachweissammlung ist Teil der Abgabe.
-Der vorherige Dokumentationsstand wurde vor der Löschung außerhalb des Projekts gesichert.
-
-Die frische Clone-/Einrichtungsprüfung vom selben Tag lief auf demselben Rechner;
-Python/Git/Docker/Ollama waren bereits installiert, Downloadcache war erlaubt.
-Andere Hardware und Linux als Host wurden nicht geprüft. Echte Modellerfolge bleiben
-auch bei identischem Prompt und Temperatur 0 nicht garantiert.
-
-Veröffentlichen des aktuellen Quellstands und Demo-Video bis vier Minuten bleiben
-für die vollständige Abgabe erforderlich. [PDF-Abgleich](requirements-matrix.md).
+Der historische Modelllauf und die aktuelle automatische Abnahme sind getrennte Nachweise. Die Bereinigung verändert keine Rohdateien des Modelllaufs und enthält keine manuelle Korrektur seines Zielcodes. Das selbst geschnittene Video gehört separat zur Abgabe.

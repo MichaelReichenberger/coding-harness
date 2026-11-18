@@ -192,7 +192,7 @@ def test_stage2_feature_failed_check_then_fix_in_real_sandbox(tmp_path):
                 "replace_text",
                 path="receipt.py",
                 old="    def __init__(self):\n        self._items = []\n        self._discounts = []",
-                new="    def __init__(self, service_fee=0):\n        import math\n        if isinstance(service_fee, bool) or not isinstance(service_fee, (int, float)) or not math.isfinite(service_fee) or service_fee < 0:\n            raise ValueError('service_fee must be a finite non-negative number')\n        self.service_fee = service_fee\n        self._items = []\n        self._discounts = []",
+                new="    def __init__(self, service_fee=0):\n        import math\n        if isinstance(service_fee, bool) or not isinstance(service_fee, (int, float)) or (isinstance(service_fee, float) and not math.isfinite(service_fee)) or service_fee < 0:\n            raise ValueError('service_fee must be a finite non-negative number')\n        self.service_fee = service_fee\n        self._items = []\n        self._discounts = []",
             ),
             tool_reply("run_check", check_id="feature"),
             tool_reply(
@@ -205,7 +205,7 @@ def test_stage2_feature_failed_check_then_fix_in_real_sandbox(tmp_path):
                 "replace_text",
                 path="receipt.py",
                 old="        return total",
-                new="        return total + self.service_fee",
+                new="        if isinstance(self.service_fee, int):\n            from fractions import Fraction\n            return Fraction(total) + self.service_fee\n        return total + self.service_fee",
             ),
             tool_reply("run_check", check_id="feature"),
             tool_reply("finish", summary="Nur deterministische Feature-Testfixture"),

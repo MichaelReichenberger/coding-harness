@@ -1,56 +1,35 @@
-# Zielrepository und geschützte Akzeptanz
+# Aufgaben und geschützte Prüfungen
 
-- URL: https://github.com/emilybache/SupermarketReceipt-Refactoring-Kata
-- Ausgangs-Commit: `c72d68abd77a417f84193b72a3b8d14177336066`.
-- Teilprojekt: `python/`, direkt aus dem Commit; kein künstlich eingefügter Bug.
-- Änderbare Dateien: die sechs Anwendungsdateien in `config/target.json`.
-- Tests und Konfiguration sind geschützt. Keine Dateien anlegen oder löschen.
+Das freigegebene Ziel ist der Pythonteil der Supermarket Receipt Kata am Commit `c72d68abd77a417f84193b72a3b8d14177336066`. Projektkennung und erlaubte Dateien stehen in `config/target.json`. Das Modell darf `shopping_cart.py`, `teller.py`, `receipt.py`, `receipt_printer.py`, `model_objects.py` und `catalog.py` bearbeiten. Tests und Konfiguration bleiben geschützt. Neue Dateien und das Löschen von Dateien sind nicht erlaubt.
 
-## Kleine Aufgabe: Stückzahlen auf dem Kassenbeleg
+## Servicegebühr im Featureprofil
 
-Die Kasse (`Teller`) verarbeitet einen `ShoppingCart` und erzeugt einen `Receipt`.
-`ReceiptPrinter` druckt diesen Beleg. Stückzahlen werden im Warenkorb auch als Float
-übergeben. Der vorhandene Drucker zeigt deshalb beispielsweise `3.0` an. Fachlich
-sollen Stückzahlen ohne Nachkommastellen erscheinen; Gewichte behalten drei Stellen.
-Die Rechnung und Rabattregeln sollen unverändert bleiben.
+Die Kasse soll eine optionale Servicegebühr unterstützen. Die öffentlichen Aufrufe sind `Teller.checks_out_articles_from(cart, service_fee=0)` und `Receipt(service_fee=0)`. Ohne das neue Argument muss das bisherige Verhalten erhalten bleiben. Die Gebühr wird nach Preisen und Rabatten genau einmal addiert. Die Aufgabe erfordert Änderungen in mindestens zwei zusammenarbeitenden Modulen.
 
-Der vollständige, tatsächlich geprüfte Nutzerprompt steht im
-[Beispielprompt der README](../README.md#beispielprompt) und im Feld `task` des
-[aktuellen echten Modellberichts](evidence/report.json). Es handelt sich um eine
-Verhaltensanforderung mit Dateihinweis, ohne Quellcodekorrektur. Die UI beginnt leer;
-das Modell muss Dateien selbst untersuchen.
+Erlaubt sind endliche Werte vom Typ `int` oder `float`, die mindestens null sind. Negative Werte, NaN, Unendlich, Strings, `None` und `bool` müssen einen `ValueError` mit einer nicht leeren Fehlermeldung auslösen. Mengen, Preise und Rabattregeln dürfen sich nicht ändern.
 
-## Vorab festgelegte geschützte Akzeptanz
+Auch Ganzzahlen wie `10**30` und `10**400` müssen funktionieren. Eine Umwandlung in `float` darf weder einen Überlauf verursachen noch den Warenbetrag oder dessen Nachkommastellen verlieren. Wenn ein ganzzahliger Gebührenwert bei der Addition zu einem Float Präzision verlieren würde, ist ein exakter rationaler Gesamtbetrag verlangt. Dafür darf `fractions.Fraction` aus der Standardbibliothek verwendet werden. Das bedeutet keine neue Berechnung aller Warenpreise mit Dezimalarithmetik. Erhalten werden soll der bereits berechnete Warenbetrag.
 
-`checks/acceptance.py` prüft den kompletten Kassiervorgang und den gedruckten Beleg:
+Der vollständige verwendete [Feature-Prompt](feature-prompt.txt) kann direkt in die Oberfläche kopiert werden. Er benennt die Schnittstellen und Geschäftsregeln. Er enthält keinen Patch und keine zu bearbeitenden Dateinamen. Der Hinweis auf `Fraction` wurde als Hilfe vorgegeben und ist in der README offengelegt.
 
-| Fall | Einheit | Menge | Erwartete Mengenzeile |
-|---|---|---:|---|
-| leer | EACH | 0.0 | keine |
-| einzelner Artikel | EACH | 1.0 | keine zusätzliche Zeile |
-| Gewicht | KILO | 1.5 | `1.25 * 1.500` |
-| zwei Artikel | EACH | 2.0 | `1.25 * 2` |
-| drei Artikel | EACH | 3.0 | `1.25 * 3` |
-| fünf Artikel | EACH | 5.0 | `1.25 * 5` |
+`checks/feature.py` prüft 30 Fälle. Zwei Fälle sichern die bisherigen Aufrufe ab. Vier Fälle prüfen Gebühren an Kasse und Beleg, die Nullgebühr und die Addition nach einem Rabatt. Sechs Fälle prüfen sehr große Ganzzahlen am direkt erzeugten Beleg und beim Kassieren mit oder ohne Rabatt. Weitere 18 Fälle prüfen neun ungültige Werte jeweils an beiden Schnittstellen. Dazu gehören ein negativer kleiner und sehr großer Integer, NaN, beide Unendlichkeiten, ein String, `None` und beide booleschen Werte.
 
-Der Einzelpreis beträgt jeweils 1,25. Die ersten drei Fälle sind Positivkontrollen.
-Im Ausgangscommit scheitern ausschließlich die drei Stückmengenfälle. Der Test prüft
-zusätzlich den unveränderten Gesamtpreis und eine vorhandene Gesamtzeile.
-`baseline_bug_reproduced` dokumentiert diesen fachlichen Fehler, statt einen
-Infrastrukturfehler als rote Baseline zu zählen. Es steuert keine Modellaktionen.
+Die vier Checknamen sind `feature`, `regression_core`, `regression_pricing` und `lint`. `regression_core` führt den unveränderten Upstream-Test aus. `regression_pricing` prüft normale Preise, Gewichte, Prozentangebote, „3 für 2“ und einen Paketpreis für fünf Artikel. Solche Regressionstests sichern ab, dass bestehendes Verhalten durch die neue Änderung nicht beschädigt wird. `lint` prüft die Syntax aller Anwendungsdateien mit Python-AST. Es ist kein vollständiger Stil- oder Typchecker. Für das reine Pythonziel ist kein eigener Buildschritt nötig.
 
-`regression_core` führt den unveränderten Upstream-unittest aus; Originalbytes,
-Herkunft und Lizenz stehen in `checks/upstream/`. `regression_pricing` schützt
-Normal-/Gewichtspreise, Prozentangebote, „3 für 2“ und „5 zum Paketpreis“.
-Baseline und Endprüfung verwenden dieselben Checks und geschützten Dateihashes.
+Die Feature-Baseline muss fachlich fehlschlagen, weil der Ausgangscommit die neue Schnittstelle noch nicht hat. Die Kontrollen für alte Aufrufe und die anderen drei Checks müssen funktionieren. Infrastrukturfehler gelten nicht als Nachweis des fehlenden Features. Nach `finish` führt der Harness alle vier Checks unabhängig erneut aus. Frühere Fehler bleiben im Bericht erhalten.
 
-## Eigene Aufgaben des Professors
+## Stückmengen im Bugfixprofil
 
-Eigene Prompts werden direkt im leeren Aufgabenfeld eingegeben. Für eine andere
-fachliche Anforderung muss der Prüfer zuvor `checks/acceptance.py` anpassen und mit
-`python -m harness baseline` den Fehler und funktionierende Kontrollen nachweisen.
-Auch die erwarteten Fallnamen in `baseline_reproduces()` (`harness/verifier.py`)
-müssen dann zur Aufgabe passen. Zielmodule werden ausschließlich in Docker importiert.
-Die neue Aufgabe läuft mit demselben Harness, denselben Werkzeugen und Limits.
-Geschützte Tests bleiben vom Modell unveränderbar. Grüne bestehende Tests allein
-beweisen keine beliebige andere Anforderung.
+Die Stage-1-Aufgabe betrifft den gedruckten Kassenbeleg. Stückmengen werden teilweise als Float übergeben. Der Drucker zeigt dann etwa `3.0` an. Stückzahlen sollen ohne Nachkommastellen erscheinen. Gewichte behalten drei Nachkommastellen. Die Berechnung von Preisen und Rabatten soll gleich bleiben.
+
+Ein passender Auftrag lautet: „Fix receipt printing so quantities for EACH products are printed as integers, for example 2 instead of 2.0. Keep KILO quantities at three decimal places and preserve totals and discounts. Inspect the relevant code, run acceptance, regression_core and regression_pricing, and fix failing checks before finishing.“
+
+`checks/acceptance.py` prüft sechs Belege. Ein leerer Warenkorb, ein einzelner Artikel und ein Gewicht von 1,5 Kilogramm dienen als Kontrollen. Bei zwei, drei und fünf Stück müssen die Mengenzeilen ohne `.0` erscheinen. Zusätzlich werden Gesamtbetrag und Gesamtzeile geprüft. Im unveränderten Ausgangscommit schlagen die drei Stückmengenfälle fehl. Das Profil verwendet `acceptance`, `regression_core` und `regression_pricing`.
+
+Das Featureprofil behebt diesen unabhängigen Druckfehler nicht automatisch. Beide Profile starten mit demselben unveränderten Zielcommit und haben jeweils ihren eigenen fachlichen Prüfumfang.
+
+## Andere Aufgaben testen
+
+Ein frei eingegebener Auftrag ersetzt die vorbereiteten Prüfungen nicht. Für eine andere Geschäftsanforderung müssen die Akzeptanztests und die Baseline-Erkennung in `harness/verifier.py` passend angepasst werden. Danach muss ein Baselinelauf den erwarteten fachlichen Fehler bei funktionierenden Kontrollen nachweisen.
+
+Alle Zielmodule werden nur im Docker-Container importiert. Die vorbereiteten Tests liegen außerhalb der für das Modell zugänglichen Arbeitskopie. Ihre Inhalte werden über Hashes geprüft und im Container nur lesbar eingebunden. Ein fester Reparaturpatch existiert ausschließlich als Testfixture in `tests/test_docker.py`. Er ist keine Funktion der Oberfläche oder CLI und wird dem echten Modell nicht mitgegeben.

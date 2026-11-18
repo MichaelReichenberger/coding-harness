@@ -262,7 +262,6 @@ class RunService:
                     reason=reason,
                     pending=data.get("pending"),
                 )
-            self.saved_state = self.report["state"]
             try:
                 diff, changed, truncated = self.workspace.diff(
                     self.settings.limits.artifact_bytes // 4
@@ -280,20 +279,26 @@ class RunService:
             }
 
     def snapshot(self):
+        active = self.active
+        report = self.report
+        controller = self.controller
+        state = self.saved_state
+        actions = 0
+        if controller:
+            state = controller.state
+            actions = controller.actions
+        elif report:
+            actions = report.get("actions", 0)
+        if report and not active:
+            state = report["state"]
         return {
-            "active": self.active,
+            "active": active,
             "events": self.store.snapshot() if self.store else [],
-            "report": self.report,
+            "report": report,
             "diff": self.diff,
             "error": self.error,
             "run_id": self.workspace.run_id if self.workspace else None,
             "path": str(self.workspace.path) if self.workspace else None,
-            "actions": self.controller.actions
-            if self.controller
-            else (self.report or {}).get("actions", 0),
-            "state": self.report["state"]
-            if self.report and not self.active
-            else self.controller.state
-            if self.controller
-            else self.saved_state,
+            "actions": actions,
+            "state": state,
         }

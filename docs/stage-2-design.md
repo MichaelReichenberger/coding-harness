@@ -1,105 +1,66 @@
-# Stage-2-Design und Sicherheitsentscheidungen
+# Aufbau und Ablauf
 
-## Verantwortung und Datenfluss
+Die Oberfläche in `app.py` und die CLI in `harness/__main__.py` verwenden beide `RunService`. Dieser startet einen Worker und stellt Start, Öffnen, Abbruch und Fortsetzen bereit. Die fachliche Ablaufsteuerung liegt im Controller. Dadurch führt die Oberfläche keine eigenen Dateiwerkzeuge oder Prüfungen aus.
 
 ```mermaid
-sequenceDiagram
-    participant U as CLI / UI
-    participant S as RunService
-    participant P as SessionStore
-    participant C as Controller
-    participant M as Modell
-    participant V as Verifier / Docker
-    U->>S: Projekt, Profil, eigener Auftrag
-    S->>P: Auftrag, Commit, Rechte, Checks speichern
-    S->>C: neue Archivkopie oder validierter Checkpoint
-    C->>V: geschützte Baseline
-    loop verbleibende Limits
-        C->>C: Karte / Dateien wählen, Kontext begrenzen
-        C->>P: Zähler und pending=model atomar speichern
-        C->>M: trusted Aufgabe + untrusted Kontext
-        M-->>C: eine strukturierte Werkzeugaktion
-        C->>P: pending=tool vor Nebenwirkungen
-        C->>C: Argumente, Pfad und Rechte prüfen
-        C->>V: falls angefordert: festen Check ausführen
-        V-->>C: Status, Exit-Code, Ausgabe und Cleanup
-        C->>P: Ergebnis, Historie und neue Dateihashes
-    end
-    C->>V: nach finish unabhängig alle Checks
-    C->>P: Endstatus, Diff und offene Arbeit
-    P-->>U: gespeicherte / wieder geöffnete Sitzung
+flowchart LR
+    U[Oberfläche oder CLI] --> S[RunService]
+    S --> C[Controller]
+    C --> N[Navigation]
+    C --> X[ContextManager]
+    X --> M[Ollama]
+    M --> C
+    C --> T[RepositoryTools]
+    T --> V[Verifier und DockerRunner]
+    V --> C
+    C <--> P[SessionStore]
+    C --> R[RunStore]
 ```
 
-## Navigation und Git-Zustand
+Der Controller bereitet eine Arbeitskopie des festgelegten Zielcommits vor und prüft zuerst die Baseline. Danach fragt er das Modell nach jeweils einer strukturierten Werkzeugaktion. Das Werkzeugergebnis wird als Beobachtung zum Gespräch hinzugefügt. Nach einem Fehler kann das Modell seine Änderung korrigieren. Aktionen, Runden, Wiederholungen und Laufzeiten sind begrenzt. Nach `finish` entscheidet eine unabhängige Endprüfung über den Erfolg.
 
-`Navigation` nutzt `RepositoryTools.files/read`: dieselbe Pfadgrenze, Dateigröße,
-UTF-8-/Binärprüfung und Symlink-/Junctionsperre gelten für AST-Navigation und Lesen.
-AST-Parsing liefert Methoden-/Klassennamen mit Zeilen und Importabhängigkeiten;
-Syntaxfehler werden als Daten zurückgegeben. Zielcode wird dabei nicht importiert.
-Ein einfacher Namensscore wählt bis zu vier Trefferdateien plus direkte lokale
-Abhängigkeiten (insgesamt höchstens sechs). Keine externe Suchdatenbank oder LSP.
+## Navigation
 
-Die Laufkopie stammt aus `git archive`, enthält kein .git und keine Remotezugänge.
-`git diff --no-index --no-ext-diff --no-textconv --name-status base repo` zeigt den
-aktuellen Unterschied; Commit und relative Änderungen bleiben dokumentiert.
-Es wird kein Git-Hook oder externer Diff-Treiber des Zielrepos ausgeführt.
+`Navigation` in `harness/navigation.py` untersucht Pythondateien mit `ast.parse`. Sie liest Klassen, Funktionen und Imports samt Zeilennummern, ohne Zielcode auszuführen. Die Übersicht untersucht bis zu 80 Module. Suchbegriffe aus dem Auftrag bewerten Dateinamen und Symbole. Bis zu vier passende Dateien werden ausgewählt und um direkte lokale Abhängigkeiten ergänzt. Die Auswahl enthält höchstens sechs Dateien. Das begrenzt die Auswahl für den Kontext, nicht die Anzahl der im Repository vorhandenen Dateien.
 
-## Kontext und Vertrauen
+Die Navigation verwendet dieselben Pfad- und Größenprüfungen wie die Dateiwerkzeuge. Syntaxfehler werden als Ergebnis zurückgegeben. Das Modell kann mit `inspect_repository` eine neue Übersicht anfordern und mit den Dateiwerkzeugen weiter suchen. Die Startkarte des Featureprofils ist auf 4.096 Bytes begrenzt. Sie ist nicht dauerhaft angeheftet und kann später aus dem Kontext fallen.
 
-Trusted bleiben die Systemanweisungen und der unveränderte Nutzerauftrag mit Scope,
-Checknamen und vorbereiteten fachlichen Akzeptanzkriterien. Das Featureprofil fügt
-Karte/Baselinestatus als ausdrücklich untrusted User-Beobachtung hinzu. Der Agent
-findet und liest den Code selbst. Auch Schritte aus der alten Historie bleiben Daten.
+Der Git-Zustand wird mit `git diff --no-index` zwischen der Ausgangskopie `base` und der Arbeitskopie `repo` ermittelt. Der Bericht nennt zusätzlich den festgelegten Ausgangscommit. In den Arbeitskopien liegen keine Git-Zugangsdaten.
 
-Das Featurebudget beträgt höchstens 32.768 UTF-8-Bytes (CPU-Override: 16.384) bzw. ein kleineres konfiguriertes
-`context_bytes`-Limit. Gezählt wird der serialisierte Ollama-Request samt Werkzeug-Schema
-und Escapezeichen, nicht nur der sichtbare Text. Älteste Beobachtungen werden durch
-eine deterministische, begrenzte Schrittliste ersetzt; nötigenfalls wird die letzte
-Beobachtung markiert gekürzt. Trusted Vorgaben passen entweder vollständig oder der
-Lauf stoppt klar. Stage 1 behält seinen bisherigen Kontextlimit-Stopp. Die Rohereignisse
-liegen innerhalb ihres eigenen Budgets weiterhin im Sitzungsprotokoll.
+## Kontextverwaltung
 
-## Checkpoint-Protokoll
+`ContextManager` in `harness/context.py` wird vom Controller vor Modellanfragen und beim Speichern aufgerufen. Im Featureprofil zählt das Budget den vollständigen serialisierten Modellrequest mit Werkzeugdefinitionen und JSON-Escaping. Es gilt höchstens 32.768 Bytes und bei ausdrücklich eingestelltem CPU-Betrieb höchstens 16.384 Bytes. Ein kleinerer konfigurierter Wert hat Vorrang. Das Bugfixprofil behält das bisherige Verhalten und stoppt bei seinem Kontextlimit.
 
-1. `RunService` erwirbt den OS-RunLock und prüft unbestätigte Container.
-2. Der Controller speichert pending und bereits erhöhte Zähler VOR einer Modell-,
-   Datei- oder Checkaktion. session.tmp wird geschrieben, geflusht und per fsync
-   gesichert; replace tauscht session.json atomar aus.
-3. Nach bekannter Rückkehr speichert er Beobachtungen/Ergebnisse und neue Hashes.
-   Eigene erfolgreiche Edits ersetzen damit ausdrücklich den alten Sollzustand.
-4. Sauberer Abbruch wartet auf die HTTP-Coroutine bzw. den Container-Cleanup und
-   hinterlässt einen sicheren Checkpoint. Ein fremder CLI-Prozess kann über cancel
-   eine Anforderung setzen; ein kleiner Watcher unterbricht auch laufende HTTP-Requests.
-5. Nach hartem Prozessabsturz bleibt pending stehen. Öffnen zeigt die unsichere Aktion;
-   Resume pausiert und wiederholt sie nie automatisch. Manuelle Prüfung oder neuer Lauf.
+Die ersten beiden Nachrichten enthalten Systemregeln und Originalauftrag mit Rechten und Akzeptanzkriterien. Sie bleiben erhalten. Repositorykarte, Quelltext und Werkzeugausgaben sind als nicht vertrauenswürdige Daten gekennzeichnet. Sie dürfen keine Regeln überschreiben.
 
-Resume vergleicht Project-Allowlist, Target/Commit, Editierbereich, Tooldefinitionen,
-Akzeptanzkriterien, Checks/Testhashes, Modellsettings und Limits. Alle Zähler werden
-übernommen. Die aktuelle Arbeitskopie und die unveränderte Baseline müssen zum
-Checkpoint passen; neue Dateien, Links/Hardlinks und Baselineänderungen pausieren.
-Nach Docker-Vorprüfung wird außerdem die gespeicherte Image-ID verglichen.
-Ein neues Modell-/CPU-Setting kann daher nicht unbemerkt die alte Policy ersetzen.
-Es gibt keinen Reset auf Originalcode und keinen unsicheren Bestätigungs-Schalter.
+Wenn der Request zu groß ist, erstellt der ContextManager eine kurze Beschreibung der letzten acht Schritte mit höchstens 1.024 Bytes. Dann entfernt er ältere Beobachtungen aus dem Modellkontext. Die letzte Beobachtung bleibt möglichst erhalten und wird nötigenfalls ebenfalls gekürzt. Auch die Kurzfassung bleibt ausdrücklich nicht vertrauenswürdig. Es wird kein zweites Modell zur Zusammenfassung aufgerufen. Passen Auftrag und Regeln nicht in das Budget, wird der Lauf gestoppt.
 
-`SessionStore` ist eine lokale Einbenutzerablage außerhalb des Agentenbereichs, keine
-signierte Datenbank gegen Angriffe des angemeldeten Benutzers. Sitzungs-IDs sind streng
-validiert, Datenmengen begrenzt und Dateilinks bei der Zustandsprüfung verboten.
+Der gekürzte Gesprächsstand wird im Checkpoint gespeichert und nach einer sicheren Fortsetzung wieder geladen. Das Ereignisprotokoll ist davon getrennt. Dort bleiben die bisherigen Aktionen innerhalb des Artefaktbudgets nachvollziehbar. Jede tatsächliche Kürzung erzeugt `context_shortened` mit Größe vorher und nachher, Limit und Auslöser. Die Oberfläche zeigt dafür „Kontext gekürzt“.
 
-## Prüfung und Grenzen
+## Sitzungsspeicher und Checkpoints
 
-Die Feature-Checks sind eine eigene fachliche Aufgabe; sie ersetzen keine bestehende
-Bugfix-Akzeptanz. Stage 1 bleibt im Profil bugfix aktiv. Die Verifikation bewertet
-CheckResult mit Status, Exit-Code, Timeout, Abbruch und Cleanup — keine Modellbehauptung.
-Failed/unavailable/not_run bleiben sichtbar. Syntaxlint läuft in Docker mit AST; es
-ersetzt keinen Stil-/Typchecker. Ein zusätzlicher Build ist hier nicht nötig.
+`SessionStore` in `harness/sessions.py` schreibt zuerst `session.tmp`, sichert den Inhalt mit `flush` und `fsync` und ersetzt dann atomar `session.json`. Der Checkpoint enthält Auftrag, Projekt, Profil, Ausgangscommit, erlaubte Änderungen, Checks, Modellsettings, Limits, Zähler, Schritte, Gespräch und Dateihashes.
 
-Die bestehende Dockergrenze bleibt unverändert: UID 10001, keine Capabilities, kein
-Netz/Docker-Socket/Secrets, read-only Root-/Repo-/Testmounts, begrenzte tmpfs/CPU/RAM/
-Prozesse. Das aktive Containerregister blockiert weitere Starts, wenn Cleanup nicht
-bestätigt ist. Alle Aktionen, Ablehnungen und Transportwiederholungen zählen weiter.
+Vor einer Modellanfrage, einem Werkzeugaufruf oder einer Prüfung wird die laufende Aktion als `pending` gespeichert. Erst wenn ihr Ergebnis bekannt ist und erforderliche Prozesse sicher beendet wurden, wird dieser Eintrag entfernt. Bei einer Unterbrechung mitten in einer Aktion bleibt damit sichtbar, dass ihr Ausgang unsicher ist. Der Harness wiederholt sie nicht automatisch.
 
-Das Artefaktbudget verteilt sich auf Ereignisse, Bericht, Diff und Checkpoint zu je
-einem Viertel. Zu große Texte werden sichtbar gekürzt; ein zu großer Checkpoint führt
-zum sicheren Stopp. Quellkopien und Release-ZIP liegen außerhalb dieses Laufbudgets; atomare Temporärdateien können kurzzeitig zusätzlich anfallen.
-Echte Modellleistung kann trotz Temperatur 0 schwanken. Ein deterministischer
-Scripted-Rot-Grün-Test ist ausdrücklich kein Ersatz für den echten Featurelauf.
+Ein sauberer Abbruch beendet laufende Anfragen und Container und speichert einen fortsetzbaren Zustand. Beim Fortsetzen werden die aktuelle Konfiguration, Rechte, Werkzeugdefinitionen, Akzeptanzkriterien, Testhashes, Ausgangskopie und Arbeitskopie mit dem Checkpoint verglichen. Eigene Änderungen des Modells gehören zum erwarteten Dateizustand und bleiben erhalten. Das Sandbox-Image wird ebenfalls geprüft. Die verbrauchten Zähler werden übernommen.
+
+Bei Abweichungen oder einem unklaren `pending` pausiert der Lauf. Es gibt keinen Schalter zum ungeprüften Wiederholen einer unsicheren Aktion. Frühere Endchecks werden nach einer Fortsetzung als `previous_final` geführt. Aktuell noch nicht ausgeführte Endchecks bleiben `not_run`. Abgeschlossene Sitzungen können zur Prüfung geöffnet werden, ohne ihren Status zu verändern.
+
+Die Sitzungsdateien sind für einen einzelnen vertrauenswürdigen lokalen Benutzer gedacht. Sie sind nicht signiert. Ein Benutzer mit Schreibzugriff auf den gesamten Projektordner kann sie verändern. Diese Grenze wird durch die Hashprüfung nicht aufgehoben.
+
+## Werkzeuge und Ausführung
+
+`RepositoryTools` in `harness/repository.py` enthält die Werkzeugregistrierung und prüft Argumente und Pfade. Nur die sechs Dateien aus `config/target.json` dürfen verändert werden. Das Modell kann keine Dateien anlegen oder löschen. Es erhält keine Shell und keine Werkzeuge für Netzwerkzugriffe, Push, Merge oder Deployment.
+
+`Verifier` wählt die festgelegten Checks aus. `DockerRunner` führt sie in einem kurzlebigen Linux-Container aus. Der Container läuft ohne Rootrechte, ohne Netzwerk, mit schreibgeschütztem Dateisystem und festen Grenzen für CPU, Arbeitsspeicher, Prozesse, Zeit und Ausgabe. Geschützte Tests werden nur lesbar eingebunden. Symlinks, Junctions und unzulässige Pfade werden abgewiesen. Ein lokaler RunLock verhindert parallele Schreibläufe.
+
+Ein Abbruch muss auch die Kindprozesse beenden. Ist das Containerende nicht bestätigt, darf der Controller keine weiteren Aktionen starten. Fehlende Infrastruktur wird als Fehler angezeigt. Es gibt keinen Ersatzlauf des Zielcodes auf dem Host. Docker begrenzt die Ausführung, ist aber keine virtuelle Maschine und kein allgemeiner Sicherheitsbeweis für absichtlich bösartigen Code.
+
+## Ergebnisse und Tests
+
+`RunStore` in `harness/store.py` schreibt Ereignisse, Bericht und Diff. Der Bericht hält geänderte Dateien, Prüfausgaben und offene Arbeit fest. Fehlgeschlagene, nicht verfügbare und noch nicht ausgeführte Prüfungen bleiben sichtbar. Die Modellbehauptung, fertig zu sein, reicht nicht für Erfolg.
+
+`tests/test_stage2.py` prüft Navigation, Kontextkürzung, Wiederöffnen, erhaltene Änderungen und Zähler sowie sichere Ablehnung bei Abweichungen. `tests/test_controller.py` prüft die Modellschleife und ihre Grenzen. Die weiteren Tests prüfen Dateiwerkzeuge, Pfadschutz, Prozesse, Konfiguration und Oberfläche. `tests/test_docker.py` führt gesondert freigegebene echte Containerprüfungen aus. Dabei gibt es einen festen Bugfix und eine Feature-Reparatur nach einem fehlgeschlagenen Check. Diese Antworten sind ausdrücklich Testdaten. Der echte Modelllauf wird mit eigenen Rohdateien getrennt belegt.
+
+Die Laufzeitabhängigkeiten sind Streamlit für die Oberfläche, httpx für den Modellzugang und Pydantic für Konfiguration und Werkzeugargumente. Navigation, Kontextkürzung und Sitzungsspeicher verwenden die Python-Standardbibliothek. Es wird kein Agentenframework verwendet.

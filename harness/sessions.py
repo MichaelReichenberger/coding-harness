@@ -81,6 +81,9 @@ class SessionStore:
 
     def validate(self, workspace, policy):
         data = self.load()
+        # Ein fertiger Lauf bleibt abgeschlossen, auch wenn Resume angefragt wird.
+        if data["state"] in {"passed", "baseline_checked"}:
+            raise HarnessError("Abgeschlossene Sitzung benötigt keine Fortsetzung")
         try:
             if data["policy"] != policy:
                 raise HarnessError("Berechtigungen, Checks oder Einstellungen wurden geändert")
@@ -101,8 +104,6 @@ class SessionStore:
             limits = policy["settings"]["limits"]
             if data["actions"] >= limits["actions"] or data["rounds"] >= limits["rounds"]:
                 raise HarnessError("Gespeicherte Limits sind verbraucht")
-            if data["state"] in {"passed", "baseline_checked"}:
-                raise HarnessError("Abgeschlossene Sitzung benötigt keine Fortsetzung")
             return data
         except (HarnessError, KeyError) as exc:
             self.pause(exc)

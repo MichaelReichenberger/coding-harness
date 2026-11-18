@@ -1,27 +1,64 @@
 diff --git a/receipt.py b/receipt.py
 --- a/receipt.py
 +++ b/receipt.py
-@@ -8,7 +8,8 @@
+@@ -5,12 +5,27 @@
+         self.quantity = quantity
+         self.price = price
+         self.total_price = total_price
++import math
++from fractions import Fraction
++
++
++def _validate_service_fee(service_fee):
++    if isinstance(service_fee, bool):
++        raise ValueError("service_fee must be a non-negative int or float, got bool")
++    if not isinstance(service_fee, (int, float)):
++        raise ValueError("service_fee must be a non-negative int or float, got %r" % (service_fee,))
++    if isinstance(service_fee, float) and (math.isnan(service_fee) or math.isinf(service_fee)):
++        raise ValueError("service_fee must be finite, got %r" % (service_fee,))
++    if service_fee < 0:
++        raise ValueError("service_fee must be >= 0, got %r" % (service_fee,))
++    return service_fee
  
  
  class Receipt:
 -    def __init__(self):
 +    def __init__(self, service_fee=0):
-+        self.service_fee = service_fee
          self._items = []
          self._discounts = []
++        self._service_fee = _validate_service_fee(service_fee)
  
+     def total_price(self):
+         total = 0
+@@ -18,7 +33,17 @@
+             total += item.total_price
+         for discount in self.discounts:
+             total += discount.discount_amount
+-        return total
++        if isinstance(self._service_fee, int) and self._service_fee > 0:
++            try:
++                exact = Fraction(total) + self._service_fee
++            except (OverflowError, ValueError):
++                return total + self._service_fee
++            return exact
++        return total + self._service_fee
++
++    @property
++    def service_fee(self):
++        return self._service_fee
+ 
+     def add_product(self, product, quantity, price, total_price):
+         self._items.append(ReceiptItem(product, quantity, price, total_price))
 diff --git a/teller.py b/teller.py
 --- a/teller.py
 +++ b/teller.py
-@@ -11,8 +11,9 @@
+@@ -11,8 +11,8 @@
      def add_special_offer(self, offer_type, product, argument):
          self.offers[product] = Offer(offer_type, product, argument)
  
 -    def checks_out_articles_from(self, the_cart):
 -        receipt = Receipt()
 +    def checks_out_articles_from(self, the_cart, service_fee=0):
-+        receipt = Receipt(service_fee=service_fee)
 +        receipt = Receipt(service_fee=service_fee)
          product_quantities = the_cart.items
          for pq in product_quantities:

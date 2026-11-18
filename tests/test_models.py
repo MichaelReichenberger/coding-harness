@@ -95,6 +95,7 @@ def test_schema_protocol_is_explicit_and_preserves_raw_history(monkeypatch):
         [{"role": "system", "content": "task"}], tool_schemas(), threading.Event()
     )
     assert captured[0]["format"]["oneOf"] and "tools" not in captured[0]
+    assert captured[0]["think"] is False
     assert reply == {"name": "list_files", "arguments": {}}
 
 
