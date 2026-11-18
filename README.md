@@ -10,9 +10,18 @@ Benötigt werden Python 3.13, Git, Docker und Ollama. Unter Windows muss Docker 
 
 Der belegte Modelllauf verwendet `qwen3.8:27b`. Er wurde auf einer AMD Radeon RX 7900 XTX mit 24 GB Grafikspeicher ausgeführt. Das Modell ist groß und braucht entsprechend viel Speicher. Für einen Rechner mit weniger Speicher kann beispielsweise `qwen2.5-coder:7b` verwendet werden. Das ist der voreingestellte Modellname. Ein kleineres Modell kann bei derselben Aufgabe andere Ergebnisse liefern. Die automatisierten Harness-Tests benötigen kein Modell und keine dedizierte Grafikkarte.
 
-## Schritt 2. Projekt entpacken und Pythonpakete installieren
+## Schritt 2. Repository klonen und Pythonpakete installieren
 
-Das Abgabe-ZIP in einen eigenen Ordner entpacken und dort ein PowerShell-Terminal öffnen. Im aktuellen Ordner müssen `README.md`, `app.py` und `requirements.lock` liegen. Dann diese Befehle nacheinander ausführen. Die virtuelle Umgebung muss nicht aktiviert werden.
+Ein PowerShell-Terminal in dem Ordner öffnen, in dem das Projekt gespeichert werden soll. Dann das Repository klonen und in den Projektordner wechseln.
+
+```powershell
+git clone https://github.com/MichaelReichenberger/coding-harness.git
+cd coding-harness
+```
+
+Mit `git checkout --detach COMMIT_ID` den in der Abgabe angegebenen Commit öffnen. Dabei `COMMIT_ID` durch die vollständige Commit-ID aus der Abgabe ersetzen. So wird genau der eingereichte Stand getestet.
+
+Im aktuellen Ordner liegen jetzt `README.md`, `app.py` und `requirements.lock`. Mit den folgenden Befehlen die Pythonumgebung anlegen und die Pakete installieren. Die virtuelle Umgebung muss nicht aktiviert werden.
 
 ```powershell
 py -3.13 -m venv .venv
@@ -22,6 +31,14 @@ py -3.13 -m venv .venv
 Die Abhängigkeiten sind in `requirements.lock` mit festen Versionen hinterlegt. Falls bereits eine `.venv` vorhanden ist, kann diese weiterverwendet werden.
 
 ## Schritt 3. Modell und Testumgebung vorbereiten
+
+Zuerst Docker Desktop über das Startmenü öffnen und warten, bis die Docker-Engine läuft. Sie muss Linux-Container verwenden. Mit folgendem Befehl prüfen, ob sie erreichbar ist. Die Ausgabe soll `linux` sein.
+
+```powershell
+docker info --format '{{.OSType}}'
+```
+
+Docker muss bereits vor `setup --build` laufen und während der Docker-Tests, Baseline und Aufgabenläufe weiterlaufen. Für das Anlegen der Pythonumgebung und die Tests ohne `--docker` wird Docker nicht benötigt.
 
 Für den dokumentierten Modelllauf diese Befehle ausführen. Falls Ollama nicht im Hintergrund läuft, zuerst Ollama starten. Bei einer Installation ohne Desktop-App kann dafür `ollama serve` in einem zweiten Terminal laufen.
 
