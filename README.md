@@ -164,32 +164,20 @@ flowchart TD
 
 ### Navigation
 
-Beim Start einer Featureaufgabe verwendet der Controller die ersten 200 Zeichen des Auftrags als Suchtext. Später kann das Modell mit `inspect_repository` eine neue Suche anfordern. Die Karte enthält eine Modulübersicht und eine gesonderte Dateiauswahl. Die Grenze von sechs Dateien gilt für diese Auswahl.
+Beim Start einer Featureaufgabe erstellt der Controller die erste Karte mit den ersten 200 Zeichen des Auftrags als Suchtext. Fordert das Modell später mit `inspect_repository` eine neue Karte an, leitet der Controller die Suche über `RepositoryTools` weiter. Beide Wege nutzen dieselbe Navigation.
 
 ```mermaid
-sequenceDiagram
-    participant C as Controller
-    participant T as RepositoryTools
-    participant N as Navigation
-    participant G as Git
-    alt Startkarte im Featureprofil
-        C->>N: inspect über tools.navigate
-    else Modell fordert inspect_repository an
-        C->>T: execute mit Suchtext
-        T->>N: inspect über navigate
-    end
-    N->>T: files und read für bis zu 80 Pythonmodule
-    N->>N: Klassen, Funktionen und Imports mit ast.parse erfassen
-    N->>N: Bis zu vier Treffer auswählen und direkte lokale Imports ergänzen
-    N->>G: git diff --no-index zwischen base und repo
-    G-->>N: Änderungsstatus der Dateien
-    alt Startkarte
-        N-->>C: Karte mit Modulen, Dateiauswahl und Git-Zustand
-    else Werkzeugaufruf
-        N-->>T: Karte
-        T-->>C: Karte als Werkzeugergebnis
-    end
+flowchart TD
+    Start["Featurestart<br/>Controller erstellt die Startkarte"] --> N["Navigation.inspect"]
+    Tool["Werkzeugaufruf<br/>Modell fordert eine neue Karte an"] -->|über RepositoryTools| N
+    N --> A["Pythoncode mit AST lesen<br/>Klassen, Funktionen und Imports finden"]
+    A --> F["Passende Dateien auswählen<br/>Direkte lokale Imports ergänzen"]
+    N --> G["Änderungen mit Git ermitteln<br/>Ausgangsstand und Arbeitskopie vergleichen"]
+    F --> K["Repositorykarte für den Controller"]
+    G --> K
 ```
+
+Die Karte enthält eine Übersicht über bis zu 80 Pythonmodule, den Git-Zustand und eine Leseempfehlung. Dafür wählt die Navigation bis zu vier Suchtreffer und ergänzt deren direkte lokale Abhängigkeiten auf insgesamt höchstens sechs Dateivorschläge.
 
 ### Kontext und Sitzungen
 
