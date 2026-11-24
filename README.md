@@ -127,7 +127,7 @@ Zum Öffnen, Abbrechen oder Fortsetzen `SITZUNGS_ID` durch eine angezeigte Lauf-
 
 ## Aufbau und Prüfumfang
 
-`app.py` und `harness/__main__.py` enthalten die Oberfläche und CLI. `RunService` verbindet beide mit dem Controller. Der Controller steuert die Modellschleife, Grenzen, Checkpoints und Endprüfungen. Navigation, Kontextverwaltung und Sitzungsspeicher sind in eigenen Modulen umgesetzt. Der genaue Ablauf mit Diagramm steht in [docs/stage-2-design.md](docs/stage-2-design.md).
+`app.py` und `harness/__main__.py` enthalten die Oberfläche und CLI. `RunService` verbindet beide mit dem Controller. Der Controller steuert die Modellschleife, Grenzen, Checkpoints und Endprüfungen. Die [Diagramme](#diagramme) zeigen die wichtigsten Aufrufe. Die Designentscheidungen stehen in der [Designbeschreibung](docs/stage-2-design.md).
 
 Das Profil `bugfix` erhält die Stage-1-Aufgabe für gedruckte Stückmengen. `feature` ergänzt die optionale Servicegebühr über Kasse und Beleg und verwendet zusätzlich einen Syntaxcheck. Beide Profile verwenden die bestehenden Regressionstests. Die Geschäftsregeln und die vorbereiteten Prüfungen sind in [docs/task.md](docs/task.md) beschrieben. Für beliebige andere Aufgaben müssen passende geschützte Akzeptanztests vorbereitet werden. Grüne vorhandene Checks beweisen keine zusätzlichen Anforderungen eines frei eingegebenen Prompts.
 
@@ -140,3 +140,88 @@ Sitzungen liegen unter `.harness/runs/ID`. Dort stehen `session.json`, `events.j
 Der Harness baut auf der eigenen Stage-1-Implementierung auf. Das Zielprojekt stammt aus der [Supermarket Receipt Kata von Emily Bache](https://github.com/emilybache/SupermarketReceipt-Refactoring-Kata) am Commit `c72d68abd77a417f84193b72a3b8d14177336066`. Die übernommenen Tests, ihre Herkunft und die Lizenz liegen in `checks/upstream`.
 
 OpenAI Codex unterstützte Analyse, Implementierung, Tests und Dokumentation. Die Akzeptanztests wurden vor dem Modelllauf vorbereitet. Nach der Auswertung früherer Versuche wurden Prüfungen für große Ganzzahlen ergänzt und `fractions.Fraction` als erlaubte Lösungshilfe im Prompt genannt. Der dokumentierte Modelllauf erhielt keinen fertigen Patch. Sein Zielcode wurde nicht von Hand korrigiert. Diese Angaben gehören zum geforderten Nachweis der verwendeten Unterstützung.
+
+## Diagramme
+
+### Architektur
+
+Die Pfeile zeigen, wer wen aufruft. Fordert das Modell einen Check an, führt der Weg von den Dateiwerkzeugen zurück zum Controller. Für die Baseline und die Endprüfung ruft der Controller den Verifier selbst auf.
+
+```mermaid
+flowchart TD
+    UI["Oberfläche oder CLI"] -->|start oder resume| S[RunService]
+    S -->|run im Worker| C[Controller]
+    C -->|shorten| X[ContextManager]
+    C -->|chat| M[OllamaModelClient]
+    M -->|POST /api/chat| O[Ollama]
+    C -->|execute| T[RepositoryTools]
+    T -->|run_check ruft agent_check auf| C
+    C -->|check| V[Verifier]
+    V -->|run| D[DockerRunner]
+    C -->|write| P[SessionStore]
+    C -->|event| R[RunStore]
+```
+
+### Navigation
+
+Beim Start einer Featureaufgabe verwendet der Controller die ersten 200 Zeichen des Auftrags als Suchtext. Später kann das Modell mit `inspect_repository` eine neue Suche anfordern. Die Karte enthält eine Modulübersicht und eine gesonderte Dateiauswahl. Die Grenze von sechs Dateien gilt für diese Auswahl.
+
+```mermaid
+sequenceDiagram
+    participant C as Controller
+    participant T as RepositoryTools
+    participant N as Navigation
+    participant G as Git
+    alt Startkarte im Featureprofil
+        C->>N: inspect über tools.navigate
+    else Modell fordert inspect_repository an
+        C->>T: execute mit Suchtext
+        T->>N: inspect über navigate
+    end
+    N->>T: files und read für bis zu 80 Pythonmodule
+    N->>N: Klassen, Funktionen und Imports mit ast.parse erfassen
+    N->>N: Bis zu vier Treffer auswählen und direkte lokale Imports ergänzen
+    N->>G: git diff --no-index zwischen base und repo
+    G-->>N: Änderungsstatus der Dateien
+    alt Startkarte
+        N-->>C: Karte mit Modulen, Dateiauswahl und Git-Zustand
+    else Werkzeugaufruf
+        N-->>T: Karte
+        T-->>C: Karte als Werkzeugergebnis
+    end
+```
+
+### Kontext und Sitzungen
+
+Im Featureprofil misst der ContextManager die Größe der vollständigen Modellanfrage. Bei Bedarf kürzt er ältere Nachrichten. Auftrag, Regeln und Akzeptanzkriterien bleiben erhalten. Der Controller erhält das Gespräch zurück und sendet es über den Modellclient an Ollama. Der erste Teil zeigt eine Runde mit einem Dateiwerkzeug. Nach `finish` folgen die unabhängigen Endprüfungen.
+
+```mermaid
+sequenceDiagram
+    participant C as Controller
+    participant X as ContextManager
+    participant M as OllamaModelClient
+    participant T as RepositoryTools
+    participant P as SessionStore
+    participant S as RunService
+    C->>X: shorten vor der Modellanfrage
+    X-->>C: Gespräch innerhalb des Budgets
+    C->>P: Checkpoint mit pending für die Modellanfrage schreiben
+    C->>M: chat mit Gespräch und Werkzeugdefinitionen
+    M-->>C: Werkzeugname und Argumente
+    C->>P: Checkpoint mit pending für das Werkzeug schreiben
+    C->>T: execute
+    T-->>C: Ergebnis, etwa Dateiinhalt oder bestätigte Änderung
+    C->>C: Ergebnis zum Gespräch hinzufügen und pending leeren
+    C->>X: shorten vor dem Speichern
+    X-->>C: Gespräch für den Checkpoint
+    C->>P: Gespräch, Schritte, Zähler und Dateihashes speichern
+    opt Spätere Fortsetzung nach einem Abbruch
+        S->>P: validate prüft Checkpoint, Rechte, Limits und Arbeitskopie
+        alt Checkpoint sicher
+            P-->>S: Geprüfter Checkpoint
+            S->>C: Controller mit gespeichertem Stand starten
+        else Unklarer Ausgang oder Abweichung
+            P->>P: Sitzung mit Begründung pausieren
+        end
+    end
+```

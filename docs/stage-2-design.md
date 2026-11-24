@@ -2,22 +2,9 @@
 
 Die Oberfläche in `app.py` und die CLI in `harness/__main__.py` verwenden beide `RunService`. Dieser startet einen Worker und stellt Start, Öffnen, Abbruch und Fortsetzen bereit. Die fachliche Ablaufsteuerung liegt im Controller. Dadurch führt die Oberfläche keine eigenen Dateiwerkzeuge oder Prüfungen aus.
 
-```mermaid
-flowchart LR
-    U[Oberfläche oder CLI] --> S[RunService]
-    S --> C[Controller]
-    C --> N[Navigation]
-    C --> X[ContextManager]
-    X --> M[Ollama]
-    M --> C
-    C --> T[RepositoryTools]
-    T --> V[Verifier und DockerRunner]
-    V --> C
-    C <--> P[SessionStore]
-    C --> R[RunStore]
-```
+Die README zeigt die Aufrufe für [Architektur](../README.md#architektur), [Navigation](../README.md#navigation) sowie [Kontext und Sitzungen](../README.md#kontext-und-sitzungen).
 
-Der Controller bereitet eine Arbeitskopie des festgelegten Zielcommits vor und prüft zuerst die Baseline. Danach fragt er das Modell nach jeweils einer strukturierten Werkzeugaktion. Das Werkzeugergebnis wird als Beobachtung zum Gespräch hinzugefügt. Nach einem Fehler kann das Modell seine Änderung korrigieren. Aktionen, Runden, Wiederholungen und Laufzeiten sind begrenzt. Nach `finish` entscheidet eine unabhängige Endprüfung über den Erfolg.
+Bei einem neuen Lauf erstellt der Worker die Arbeitskopie des festgelegten Zielcommits. Der Controller prüft zuerst die Baseline. Danach fragt er das Modell nach jeweils einer strukturierten Werkzeugaktion. Das Werkzeugergebnis wird als Beobachtung zum Gespräch hinzugefügt. Nach einem Fehler kann das Modell seine Änderung korrigieren. Aktionen, Runden, Wiederholungen und Laufzeiten sind begrenzt. Nach `finish` entscheidet eine unabhängige Endprüfung über den Erfolg.
 
 ## Navigation
 

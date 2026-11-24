@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-labelledby="title desc">
+<title id="title">Sitzungen speichern und sicher fortsetzen</title>
+<desc id="desc">Vor einer Aktion wird pending gesetzt. Beim Fortsetzen prüft der Harness den Checkpoint und arbeitet weiter oder pausiert die Sitzung.</desc>
+<rect width="1920" height="1080" fill="#f6f8fb"/>
+<text x="100" y="124" font-family="Segoe UI, sans-serif" font-size="60" font-weight="700" text-anchor="start" fill="#26364b">Sitzungen speichern und sicher fortsetzen</text>
+<text x="100" y="188" font-family="Segoe UI, sans-serif" font-size="31" font-weight="400" text-anchor="start" fill="#537184">Was vor einer Aktion gespeichert wird und wann ein Lauf weitergehen darf</text>
+<rect x="100" y="292" width="460" height="250" rx="20" fill="#ffffff" stroke="#c9d4df" stroke-width="2"/>
+<text x="330" y="354" font-family="Segoe UI, sans-serif" font-size="36" font-weight="700" text-anchor="middle" fill="#26364b">Vor der Aktion</text>
+<text x="330" y="401" font-family="Segoe UI, sans-serif" font-size="25" font-weight="400" text-anchor="middle" fill="#537184">Controller</text>
+<text x="330" y="463" font-family="Segoe UI, sans-serif" font-size="27" font-weight="400" text-anchor="middle" fill="#26364b">Die geplante Aktion als</text>
+<text x="330" y="501" font-family="Segoe UI, sans-serif" font-size="27" font-weight="400" text-anchor="middle" fill="#26364b">pending speichern.</text>
+<rect x="730" y="292" width="460" height="250" rx="20" fill="#e9f6fa" stroke="#c9d4df" stroke-width="2"/>
+<text x="960" y="354" font-family="Segoe UI, sans-serif" font-size="36" font-weight="700" text-anchor="middle" fill="#26364b">Nach der Aktion</text>
+<text x="960" y="401" font-family="Segoe UI, sans-serif" font-size="25" font-weight="400" text-anchor="middle" fill="#537184">SessionStore · session.json</text>
+<text x="960" y="463" font-family="Segoe UI, sans-serif" font-size="27" font-weight="400" text-anchor="middle" fill="#26364b">Bei geklärtem Ausgang pending</text>
+<text x="960" y="501" font-family="Segoe UI, sans-serif" font-size="27" font-weight="400" text-anchor="middle" fill="#26364b">leeren und Checkpoint speichern.</text>
+<rect x="1360" y="292" width="460" height="250" rx="20" fill="#ffffff" stroke="#c9d4df" stroke-width="2"/>
+<text x="1590" y="354" font-family="Segoe UI, sans-serif" font-size="36" font-weight="700" text-anchor="middle" fill="#26364b">Sicher fortsetzen</text>
+<text x="1590" y="401" font-family="Segoe UI, sans-serif" font-size="25" font-weight="400" text-anchor="middle" fill="#537184">RunService und SessionStore</text>
+<text x="1590" y="463" font-family="Segoe UI, sans-serif" font-size="27" font-weight="400" text-anchor="middle" fill="#26364b">Rechte, Dateihashes, Zähler</text>
+<text x="1590" y="501" font-family="Segoe UI, sans-serif" font-size="27" font-weight="400" text-anchor="middle" fill="#26364b">und offene Aktionen prüfen.</text>
+<polyline points="560,418 730,418" fill="none" stroke="#537184" stroke-width="4"/>
+<polygon points="730,418 712,409 712,427" fill="#537184"/>
+<polyline points="1190,418 1360,418" fill="none" stroke="#537184" stroke-width="4"/>
+<polygon points="1360,418 1342,409 1342,427" fill="#537184"/>
+<rect x="600" y="704" width="510" height="250" rx="20" fill="#ffffff" stroke="#c9d4df" stroke-width="2"/>
+<text x="855" y="766" font-family="Segoe UI, sans-serif" font-size="36" font-weight="700" text-anchor="middle" fill="#26364b">Weiterarbeiten</text>
+<text x="855" y="813" font-family="Segoe UI, sans-serif" font-size="25" font-weight="400" text-anchor="middle" fill="#537184">Checkpoint ist sicher</text>
+<text x="855" y="875" font-family="Segoe UI, sans-serif" font-size="27" font-weight="400" text-anchor="middle" fill="#26364b">Eigene Änderungen bleiben erhalten.</text>
+<text x="855" y="913" font-family="Segoe UI, sans-serif" font-size="27" font-weight="400" text-anchor="middle" fill="#26364b">Verbrauchte Aktionen zählen weiter.</text>
+<rect x="1330" y="704" width="490" height="250" rx="20" fill="#ffffff" stroke="#c9d4df" stroke-width="2"/>
+<text x="1575" y="766" font-family="Segoe UI, sans-serif" font-size="36" font-weight="700" text-anchor="middle" fill="#26364b">Sitzung pausiert</text>
+<text x="1575" y="813" font-family="Segoe UI, sans-serif" font-size="25" font-weight="400" text-anchor="middle" fill="#537184">Prüfung fehlgeschlagen</text>
+<text x="1575" y="875" font-family="Segoe UI, sans-serif" font-size="27" font-weight="400" text-anchor="middle" fill="#26364b">Grund anzeigen. Eine unklare</text>
+<text x="1575" y="913" font-family="Segoe UI, sans-serif" font-size="27" font-weight="400" text-anchor="middle" fill="#26364b">Aktion wird nicht wiederholt.</text>
+<polyline points="1510,542 1510,616 855,616 855,704" fill="none" stroke="#537184" stroke-width="4"/>
+<polygon points="855,704 864,686 846,686" fill="#537184"/>
+<polyline points="1650,542 1650,704" fill="none" stroke="#537184" stroke-width="4"/>
+<polygon points="1650,704 1659,686 1641,686" fill="#537184"/>
+<text x="100" y="1027" font-family="Segoe UI, sans-serif" font-size="25" font-weight="400" text-anchor="start" fill="#537184">Bei einer harten Unterbrechung kann pending gesetzt bleiben. Die Prüfung erkennt diesen Fall.</text>
+</svg>
