@@ -103,7 +103,9 @@ Die Gerätewahl übernimmt normalerweise Ollama. `HARNESS_NUM_GPU=0` fordert aus
 
 Im Featureprofil ist der vollständige Modellrequest auf höchstens 32.768 UTF-8-Bytes begrenzt. Bei ausdrücklich eingestelltem CPU-Betrieb sind es höchstens 16.384 Bytes. Der kleinere Wert aus diesem Profilbudget und `limits.context_bytes` gilt. Das Bytebudget ist von Ollamas Modellfenster mit 16.384 Tokens zu unterscheiden.
 
-Für eine Vorführung der Kontextkürzung kann in `config.local.toml` unter `[limits]` der Wert `context_bytes = 16384` gesetzt werden. Danach die Oberfläche neu starten und eine neue Feature-Sitzung beginnen. Sobald das Budget überschritten wird, erscheint im Verlauf „Kontext gekürzt“. Bei zu wenig Platz für Auftrag und Regeln stoppt der Harness. Bestehende Sitzungen werden bei abweichenden Einstellungen nicht einfach fortgesetzt.
+Der Harness kürzt bei Bedarf den Verlauf. Auftrag, Systemregeln und Werkzeugbeschreibungen bleiben vollständig erhalten. Lassen sie weniger als 256 Bytes frei oder passt die Anfrage selbst mit Zusammenfassung und gekürzter letzter Beobachtung noch immer nicht ins Budget, stoppt der Lauf mit `limit_reached`.
+
+Für eine Vorführung der Kontextkürzung kann in `config.local.toml` unter `[limits]` der Wert `context_bytes = 16384` gesetzt werden. Danach die Oberfläche neu starten und eine neue Feature-Sitzung beginnen. Nach einer erfolgreichen Kürzung erscheint im Verlauf „Kontext gekürzt“. Bestehende Sitzungen werden bei abweichenden Einstellungen nicht einfach fortgesetzt.
 
 Die übrigen Standardgrenzen sind 40 Werkzeugaktionen, 50 Runden, zwei Wiederholungen pro fehlerhafter Modellanfrage, 180 Sekunden pro Modellanfrage und 120 Sekunden pro Check. Ausgaben sind auf 64 KiB und einzelne Dateien auf 256 KiB begrenzt. Ereignisse, Bericht, Diff und Checkpoint teilen sich ein Artefaktbudget von 8 MiB. Arbeitskopien sind davon getrennt.
 
@@ -143,73 +145,42 @@ OpenAI Codex unterstützte Analyse, Implementierung, Tests und Dokumentation. Di
 
 ## Diagramme
 
-### Architektur
+Die Pfeile zeigen den Ablauf eines Aufgabenlaufs. Beide Profile verwenden denselben Controller. Vor jeder Modellanfrage und Werkzeugaktion speichert er die anstehende Aktion als `pending` in `session.json`. Nach einem bekannten Werkzeugergebnis sichert er den neuen Stand. Beim Fortsetzen prüft der Sitzungsspeicher Rechte, Dateihashes, offene Aktionen und verbleibende Limits. Eine sichere Sitzung übernimmt ihre Änderungen und Zähler. Bei einer Abweichung oder einem unklaren Ausgang pausiert sie.
 
-Die Pfeile zeigen, wer wen aufruft. Fordert das Modell einen Check an, führt der Weg von den Dateiwerkzeugen zurück zum Controller. Für die Baseline und die Endprüfung ruft der Controller den Verifier selbst auf.
+### Bugfix
 
-```mermaid
-flowchart TD
-    UI["Oberfläche oder CLI"] -->|start oder resume| S[RunService]
-    S -->|run im Worker| C[Controller]
-    C -->|shorten| X[ContextManager]
-    C -->|chat| M[OllamaModelClient]
-    M -->|POST /api/chat| O[Ollama]
-    C -->|execute| T[RepositoryTools]
-    T -->|run_check ruft agent_check auf| C
-    C -->|check| V[Verifier]
-    V -->|run| D[DockerRunner]
-    C -->|write| P[SessionStore]
-    C -->|event| R[RunStore]
-```
-
-### Navigation
-
-Beim Start einer Featureaufgabe erstellt der Controller die erste Karte mit den ersten 200 Zeichen des Auftrags als Suchtext. Fordert das Modell später mit `inspect_repository` eine neue Karte an, leitet der Controller die Suche über `RepositoryTools` weiter. Beide Wege nutzen dieselbe Navigation.
+Beim Fehler im Belegdruck startet das Modell mit Auftrag, erlaubten Dateien und Checknamen. Es entscheidet selbst, ob es direkt im Code sucht oder mit `inspect_repository` eine Karte anfordert. Das Bugfixprofil behält den Gesprächsverlauf bis zum eingestellten Größenlimit.
 
 ```mermaid
 flowchart TD
-    Start["Featurestart<br/>Controller erstellt die Startkarte"] --> N["Navigation.inspect"]
-    Tool["Werkzeugaufruf<br/>Modell fordert eine neue Karte an"] -->|über RepositoryTools| N
-    N --> A["Pythoncode mit AST lesen<br/>Klassen, Funktionen und Imports finden"]
-    A --> F["Passende Dateien auswählen<br/>Direkte lokale Imports ergänzen"]
-    N --> G["Änderungen mit Git ermitteln<br/>Ausgangsstand und Arbeitskopie vergleichen"]
-    F --> K["Repositorykarte für den Controller"]
-    G --> K
+    Start["UI oder CLI → RunService<br/>Arbeitskopie für den Bugfix anlegen"] --> Base["Controller prüft die Baseline in Docker<br/>acceptance und beide Regressionen"]
+    Base --> Context["Startkontext ohne Repositorykarte"]
+    Context --> Budget{"Gespräch im Bytebudget?"}
+    Budget -->|Nein| Stop["Stopp mit limit_reached"]
+    Budget -->|Ja| Model["Controller fragt Ollama nach einer Aktion"]
+    Model --> Tool{"RepositoryTools prüft den Aufruf"}
+    Tool -->|Dateiwerkzeug oder run_check| Result["Dateien untersuchen oder ändern<br/>oder einen geschützten Check ausführen"]
+    Result --> Save["Ergebnis ins Gespräch aufnehmen<br/>Checkpoint speichern"]
+    Save --> Budget
+    Tool -->|finish| Final["Alle drei Checks erneut in Docker ausführen<br/>Diff und Ergebnis im Bericht speichern"]
 ```
 
-Die Karte enthält eine Übersicht über bis zu 80 Pythonmodule, den Git-Zustand und eine Leseempfehlung. Dafür wählt die Navigation bis zu vier Suchtreffer und ergänzt deren direkte lokale Abhängigkeiten auf insgesamt höchstens sechs Dateivorschläge.
+### Feature
 
-### Kontext und Sitzungen
-
-Im Featureprofil misst der ContextManager die Größe der vollständigen Modellanfrage. Bei Bedarf kürzt er ältere Nachrichten. Auftrag, Regeln und Akzeptanzkriterien bleiben erhalten. Der Controller erhält das Gespräch zurück und sendet es über den Modellclient an Ollama. Der erste Teil zeigt eine Runde mit einem Dateiwerkzeug. Nach `finish` folgen die unabhängigen Endprüfungen.
+Bei der Servicegebühr erstellt die Navigation schon vor der ersten Modellanfrage eine Karte. Sie erfasst Pythonmodule, Symbole und Imports per AST, wählt passende Dateien aus und vergleicht Ausgangsstand und Arbeitskopie mit Git. Die Karte und die Baseline-Ergebnisse kommen als Beobachtungen in den Startkontext. Das Modell kann anschließend gezielt Dateien lesen oder eine neue Karte anfordern.
 
 ```mermaid
-sequenceDiagram
-    participant C as Controller
-    participant X as ContextManager
-    participant M as OllamaModelClient
-    participant T as RepositoryTools
-    participant P as SessionStore
-    participant S as RunService
-    C->>X: shorten vor der Modellanfrage
-    X-->>C: Gespräch innerhalb des Budgets
-    C->>P: Checkpoint mit pending für die Modellanfrage schreiben
-    C->>M: chat mit Gespräch und Werkzeugdefinitionen
-    M-->>C: Werkzeugname und Argumente
-    C->>P: Checkpoint mit pending für das Werkzeug schreiben
-    C->>T: execute
-    T-->>C: Ergebnis, etwa Dateiinhalt oder bestätigte Änderung
-    C->>C: Ergebnis zum Gespräch hinzufügen und pending leeren
-    C->>X: shorten vor dem Speichern
-    X-->>C: Gespräch für den Checkpoint
-    C->>P: Gespräch, Schritte, Zähler und Dateihashes speichern
-    opt Spätere Fortsetzung nach einem Abbruch
-        S->>P: validate prüft Checkpoint, Rechte, Limits und Arbeitskopie
-        alt Checkpoint sicher
-            P-->>S: Geprüfter Checkpoint
-            S->>C: Controller mit gespeichertem Stand starten
-        else Unklarer Ausgang oder Abweichung
-            P->>P: Sitzung mit Begründung pausieren
-        end
-    end
+flowchart TD
+    Start["UI oder CLI → RunService<br/>Arbeitskopie für das Feature anlegen"] --> Base["Controller prüft die Baseline in Docker<br/>feature, beide Regressionen und lint"]
+    Base --> Map["Navigation erstellt die Startkarte<br/>Suchtext aus dem Auftrag"]
+    Map --> Context["ContextManager prüft die Anfragegröße<br/>Bei Bedarf ältere Beobachtungen kürzen"]
+    Context -->|Budget eingehalten| Model["Controller fragt Ollama nach einer Aktion"]
+    Context -->|Zu wenig Platz für den benötigten Kontext| Stop["Stopp mit limit_reached"]
+    Model --> Tool{"RepositoryTools prüft den Aufruf"}
+    Tool -->|Dateiwerkzeug oder run_check| Result["Dateien untersuchen oder ändern<br/>oder einen geschützten Check ausführen"]
+    Result --> Save["Ergebnis ins Gespräch aufnehmen<br/>Kontext begrenzen und Checkpoint speichern"]
+    Save --> Context
+    Tool -->|finish| Final["Alle vier Checks erneut in Docker ausführen<br/>Diff und Ergebnis im Bericht speichern"]
 ```
+
+In beiden Profilen heißen die Regressionen `regression_core` und `regression_pricing`. Ein fehlgeschlagener Check während der Modellschleife liefert dem Modell die Ausgabe für den nächsten Korrekturversuch. Für einen erfolgreichen Abschluss müssen die unabhängigen Endchecks bestehen und alle Änderungen im erlaubten Bereich liegen. Beim Feature prüft der Bericht zusätzlich, ob mindestens zwei Dateien geändert wurden.
